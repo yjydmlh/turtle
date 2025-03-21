@@ -1,0 +1,3 @@
+[submodule "chan.py"]
+	path = chan.py
+	url = https://github.com/yjydmlh/chan.py
