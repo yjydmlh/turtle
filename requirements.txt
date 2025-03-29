@@ -12,3 +12,6 @@ websockets>=10.0
 python-multipart>=0.0.5
 aiohttp>=3.8.1
 typer>=0.9.0
+ccxt>=4.0.0
+pandas>=2.0.0
+certifi>=2024.2.0

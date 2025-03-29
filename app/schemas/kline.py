@@ -1,31 +1,27 @@
 from pydantic import BaseModel
 from datetime import datetime
-from typing import Optional
+from decimal import Decimal
 
-class KlineBase(BaseModel):
-    timestamp: int
+class BtcUsdtKlineBase(BaseModel):
     open_time: datetime
     close_time: datetime
-    open_price: float
-    high_price: float
-    low_price: float
-    close_price: float
-    volume: float
-    quote_volume: float
+    open_price: Decimal
+    high_price: Decimal
+    low_price: Decimal
+    close_price: Decimal
+    volume: Decimal
+    quote_volume: Decimal
     trades_count: int
-    taker_buy_volume: float
-    taker_buy_quote_volume: float
+    taker_buy_volume: Decimal
+    taker_buy_quote_volume: Decimal
 
-class KlineCreate(KlineBase):
+class BtcUsdtKlineCreate(BtcUsdtKlineBase):
     pass
 
-class KlineUpdate(KlineBase):
-    pass
-
-class KlineInDB(KlineBase):
+class BtcUsdtKline(BtcUsdtKlineBase):
     id: int
     created_at: datetime
     updated_at: datetime
 
     class Config:
-        orm_mode = True 
+        from_attributes = True 

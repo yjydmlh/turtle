@@ -8,8 +8,8 @@ load_dotenv()
 
 class Settings(BaseSettings):
     APP_NAME: str = os.getenv("APP_NAME", "Trading System")
+    PROJECT_NAME: str = os.getenv("PROJECT_NAME", "Trading System")
     DEBUG: bool = os.getenv("DEBUG", True)
-    DATABASE_URL: str = os.getenv("DATABASE_URL", "postgresql://postgres:123456@127.0.0.1:5432/postgres")
     SECRET_KEY: str = os.getenv("SECRET_KEY", "your-super-secret-key-here")
     ALGORITHM: str = os.getenv("ALGORITHM", "HS256")
     ACCESS_TOKEN_EXPIRE_MINUTES: int = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", 30))
@@ -26,14 +26,7 @@ class Settings(BaseSettings):
     WS_PORT: int = int(os.getenv("WS_PORT", 8001))
 
     # 数据库配置
-    DB_HOST: str = "localhost"
-    DB_PORT: int = 5532
-    DB_USER: str = "postgres"
-    DB_PASSWORD: str = "postgres"
-    DB_NAME: str = "turtle"
-    
-    # 数据库连接URL
-    DATABASE_URL: str = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+    DATABASE_URL: str = os.getenv("DATABASE_URL", "postgresql://postgres:postgres@localhost:5532/postgres")
     
     # CORS配置
     CORS_ORIGINS: List[str] = ["*"]

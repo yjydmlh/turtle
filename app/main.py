@@ -14,7 +14,7 @@ from app.core.exceptions import (
 from app.core.logger import app_logger
 
 app = FastAPI(
-    title=settings.APP_NAME,
+    title=settings.PROJECT_NAME,
     description="Trading System API",
     version="1.0.0",
     openapi_url=f"{settings.API_V1_STR}/openapi.json",
@@ -29,17 +29,19 @@ app.add_exception_handler(ValidationError, validation_exception_handler)
 app.add_exception_handler(Exception, general_exception_handler)
 
 # 配置CORS
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=[str(origin) for origin in settings.CORS_ORIGINS],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+if settings.CORS_ORIGINS:
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=[str(origin) for origin in settings.CORS_ORIGINS],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
 
 # 注册路由
 app.include_router(api_router, prefix=settings.API_V1_STR)
 
+# 初始化数据库
 @app.on_event("startup")
 async def startup_event():
     app_logger.info("Application startup...")
