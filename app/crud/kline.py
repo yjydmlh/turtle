@@ -23,6 +23,7 @@ class CRUDKline:
         """创建新的K线数据"""
         model = self.get_model(symbol)
         db_obj = model(
+            timestamp=obj_in.timestamp,
             open_time=obj_in.open_time,
             close_time=obj_in.close_time,
             open_price=obj_in.open_price,
@@ -76,7 +77,7 @@ class CRUDKline:
 
     def get_multi(
         self, db: Session, *, symbol: str, skip: int = 0, limit: int = 100
-    ) -> List[BtcUsdtKline]:
+    ) -> List[dict]:
         """获取多条K线数据"""
         try:
             app_logger.debug(f"Getting multiple kline records for symbol: {symbol}, skip: {skip}, limit: {limit}")
@@ -87,27 +88,26 @@ class CRUDKline:
                 {"limit": limit, "skip": skip}
             ).mappings().all()
             
-            # 将查询结果转换为模型对象
+            # 将查询结果转换为字典列表
             klines = []
             for row in result:
-                kline = model(
-                    id=row['id'],
-                    open_time=row['open_time'],
-                    close_time=row['close_time'],
-                    timestamp=row['timestamp'],
-                    open_price=row['open_price'],
-                    high_price=row['high_price'],
-                    low_price=row['low_price'],
-                    close_price=row['close_price'],
-                    volume=row['volume'],
-                    quote_volume=row['quote_volume'],
-                    trades_count=row['trades_count'],
-                    taker_buy_volume=row['taker_buy_volume'],
-                    taker_buy_quote_volume=row['taker_buy_quote_volume'],
-                    created_at=row['created_at'],
-                    updated_at=row['updated_at']
-                )
-                klines.append(kline)
+                kline_dict = {
+                    "id": row['id'],
+                    "open_time": row['open_time'].isoformat(),
+                    "close_time": row['close_time'].isoformat(),
+                    "open_price": str(row['open_price']),
+                    "high_price": str(row['high_price']),
+                    "low_price": str(row['low_price']),
+                    "close_price": str(row['close_price']),
+                    "volume": str(row['volume']),
+                    "quote_volume": str(row['quote_volume']),
+                    "trades_count": row['trades_count'],
+                    "taker_buy_volume": str(row['taker_buy_volume']),
+                    "taker_buy_quote_volume": str(row['taker_buy_quote_volume']),
+                    "created_at": row['created_at'].isoformat(),
+                    "updated_at": row['updated_at'].isoformat()
+                }
+                klines.append(kline_dict)
             
             app_logger.debug(f"Successfully fetched {len(klines)} kline records")
             return klines

@@ -1,3 +1,5 @@
+from dataclasses import field
+
 from pydantic_settings import BaseSettings
 from typing import Optional, List
 from pydantic import AnyHttpUrl, validator
@@ -7,8 +9,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 class Settings(BaseSettings):
-    APP_NAME: str = os.getenv("APP_NAME", "Trading System")
-    PROJECT_NAME: str = os.getenv("PROJECT_NAME", "Trading System")
+    APP_NAME: str = os.getenv("APP_NAME", "turtle")
+    PROJECT_NAME: str = os.getenv("PROJECT_NAME", "turtle")
     DEBUG: bool = os.getenv("DEBUG", True)
     SECRET_KEY: str = os.getenv("SECRET_KEY", "your-super-secret-key-here")
     ALGORITHM: str = os.getenv("ALGORITHM", "HS256")
@@ -26,10 +28,10 @@ class Settings(BaseSettings):
     WS_PORT: int = int(os.getenv("WS_PORT", 8001))
 
     # 数据库配置
-    DATABASE_URL: str = os.getenv("DATABASE_URL", "postgresql://postgres:postgres@localhost:5532/postgres")
+    DATABASE_URL: str = os.getenv("DATABASE_URL", "postgresql://postgres:123456@127.0.0.1:5532/postgres?client_encoding=utf8")
     
     # CORS配置
-    CORS_ORIGINS: List[str] = ["*"]
+    CORS_ORIGINS: List[str] = field(default_factory=lambda: ["*"])
     
     @validator("CORS_ORIGINS", pre=True)
     def assemble_cors_origins(cls, v: str | List[str]) -> List[str]:

@@ -5,13 +5,13 @@ from app.core.logger import db_logger
 
 # 创建数据库引擎，启用连接池
 engine = create_engine(
-    settings.DATABASE_URL,
-    pool_pre_ping=True,  # 自动检测连接是否有效
-    pool_size=5,  # 连接池大小
-    max_overflow=10,  # 最大溢出连接数
-    pool_timeout=30,  # 连接池超时时间
-    pool_recycle=1800,  # 连接回收时间（秒）
-    echo=settings.DEBUG  # 在调试模式下打印SQL语句
+    settings.DATABASE_URL
+    ,pool_pre_ping=True  # 自动检测连接是否有效
+    ,pool_size=5  # 连接池大小
+    ,max_overflow=10  # 最大溢出连接数
+    ,pool_timeout=30  # 连接池超时时间
+    ,pool_recycle=1800  # 连接回收时间（秒）
+    ,echo=settings.DEBUG  # 在调试模式下打印SQL语句
 )
 
 # 设置默认schema为public

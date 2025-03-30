@@ -1,11 +1,10 @@
-from sqlalchemy import Column, Integer, DateTime, BigInteger, String, Numeric
+from sqlalchemy import Column, Integer, DateTime, BigInteger, String, Numeric, func
 from app.db.base_class import Base
 
 class Kline(Base):
     """K线数据基础模型"""
     
     __abstract__ = True  # 设置为抽象基类
-    
     id = Column(Integer, primary_key=True, index=True, comment="主键ID")
     timestamp = Column(BigInteger, nullable=False, index=True, comment="K线开始时间戳(毫秒)")
     open_time = Column(DateTime, nullable=False, comment="K线开始时间")
@@ -19,8 +18,8 @@ class Kline(Base):
     trades_count = Column(Integer, nullable=False, comment="成交笔数")
     taker_buy_volume = Column(Numeric(30, 8), nullable=False, comment="主动买入成交量")
     taker_buy_quote_volume = Column(Numeric(30, 8), nullable=False, comment="主动买入成交额")
-    created_at = Column(DateTime, nullable=False, comment="数据创建时间")
-    updated_at = Column(DateTime, nullable=False, comment="数据更新时间")
+    created_at = Column(DateTime, nullable=False, server_default=func.now(), comment="数据创建时间")
+    updated_at = Column(DateTime, nullable=False, server_default=func.now(), onupdate=func.now(), comment="数据更新时间")
 
 class BtcUsdtKline(Kline):
     """BTC/USDT K线数据表"""

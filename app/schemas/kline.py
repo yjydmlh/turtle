@@ -3,6 +3,7 @@ from datetime import datetime
 from decimal import Decimal
 
 class BtcUsdtKlineBase(BaseModel):
+    timestamp: int
     open_time: datetime
     close_time: datetime
     open_price: Decimal
