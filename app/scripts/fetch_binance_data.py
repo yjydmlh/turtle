@@ -125,23 +125,45 @@ def get_binance_data():
         app_logger.error(f"获取数据过程中发生错误: {str(e)}")
         return False
 
-def save_klines_to_db(db, klines_data):
-    """将K线数据保存到数据库"""
+def save_klines_to_db(db, klines_data, interval_minutes=1):
+    """将K线数据保存到数据库
+    
+    Args:
+        db: 数据库会话
+        klines_data: K线数据列表
+        interval_minutes: K线周期（分钟）
+    """
     try:
         # 转换为DataFrame
         df = pd.DataFrame(klines_data, columns=['timestamp', 'open', 'high', 'low', 'close', 'volume'])
         
+        # 数据验证
+        if df.empty:
+            app_logger.warning("没有数据需要保存")
+            return
+            
+        # 验证时间戳
+        current_time = int(datetime.now().timestamp() * 1000)
+        if df['timestamp'].max() > current_time:
+            app_logger.warning("存在未来的时间戳数据")
+            
+        # 验证价格
+        if (df[['open', 'high', 'low', 'close']] <= 0).any().any():
+            raise ValueError("存在非正数价格")
+            
+        # 验证成交量
+        if (df['volume'] < 0).any():
+            raise ValueError("存在负数成交量")
+        
         # 转换时间戳为datetime
         df['open_time'] = pd.to_datetime(df['timestamp'], unit='ms')
-        df['close_time'] = df['open_time'] + pd.Timedelta(minutes=1)
+        df['close_time'] = df['open_time'] + pd.Timedelta(minutes=interval_minutes)
         
         # 计算其他字段
         df['quote_volume'] = df['volume'] * df['close']
         df['trades_count'] = 0  # 由于1分钟K线数据不包含成交笔数，设为0
         df['taker_buy_volume'] = df['volume'] * 0.5  # 估算值
         df['taker_buy_quote_volume'] = df['taker_buy_volume'] * df['close']
-        df['created_at'] = datetime.now()
-        df['updated_at'] = datetime.now()
 
         # 重命名列以匹配数据库表结构
         df = df.rename(columns={
@@ -155,33 +177,52 @@ def save_klines_to_db(db, klines_data):
         columns = [
             'timestamp', 'open_time', 'close_time', 'open_price', 'high_price',
             'low_price', 'close_price', 'volume', 'quote_volume', 'trades_count',
-            'taker_buy_volume', 'taker_buy_quote_volume', 'created_at', 'updated_at'
+            'taker_buy_volume', 'taker_buy_quote_volume'
         ]
         df = df[columns]
 
-        # 将DataFrame转换为K线对象列表
-        kline_objects = []
-        for _, row in df.iterrows():
-            kline_obj = BtcUsdtKlineCreate(
-                timestamp=int(row['timestamp']),
-                open_time=row['open_time'],
-                close_time=row['close_time'],
-                open_price=Decimal(str(float(row['open_price']))),
-                high_price=Decimal(str(float(row['high_price']))),
-                low_price=Decimal(str(float(row['low_price']))),
-                close_price=Decimal(str(float(row['close_price']))),
-                volume=Decimal(str(float(row['volume']))),
-                quote_volume=Decimal(str(float(row['quote_volume']))),
-                trades_count=int(row['trades_count']),
-                taker_buy_volume=Decimal(str(float(row['taker_buy_volume']))),
-                taker_buy_quote_volume=Decimal(str(float(row['taker_buy_quote_volume'])))
-            )
-            kline_objects.append(kline_obj)
-
-        # 批量创建K线数据
-        kline.bulk_create(db, obj_in_list=kline_objects)
+        # 批量处理大小
+        BATCH_SIZE = 1000
         
-        app_logger.info(f"成功写入 {len(kline_objects)} 条K线数据到数据库")
+        # 将DataFrame转换为K线对象列表并分批处理
+        total_saved = 0
+        for i in range(0, len(df), BATCH_SIZE):
+            batch_df = df.iloc[i:i+BATCH_SIZE]
+            kline_objects = []
+            
+            for _, row in batch_df.iterrows():
+                try:
+                    kline_obj = BtcUsdtKlineCreate(
+                        timestamp=int(row['timestamp']),
+                        open_time=row['open_time'],
+                        close_time=row['close_time'],
+                        open_price=Decimal(str(row['open_price'])),
+                        high_price=Decimal(str(row['high_price'])),
+                        low_price=Decimal(str(row['low_price'])),
+                        close_price=Decimal(str(row['close_price'])),
+                        volume=Decimal(str(row['volume'])),
+                        quote_volume=Decimal(str(row['quote_volume'])),
+                        trades_count=int(row['trades_count']),
+                        taker_buy_volume=Decimal(str(row['taker_buy_volume'])),
+                        taker_buy_quote_volume=Decimal(str(row['taker_buy_quote_volume']))
+                    )
+                    kline_objects.append(kline_obj)
+                except Exception as e:
+                    app_logger.error(f"处理行数据时发生错误: {str(e)}")
+                    app_logger.error(f"问题数据: {row.to_dict()}")
+                    continue
+            
+            if kline_objects:
+                try:
+                    kline.bulk_create(db, symbol='btc_usdt', obj_in_list=kline_objects)
+                    total_saved += len(kline_objects)
+                    app_logger.info(f"成功写入 {len(kline_objects)} 条K线数据到数据库")
+                except Exception as e:
+                    app_logger.error(f"批量保存数据时发生错误: {str(e)}")
+                    # 继续处理下一批数据
+                    continue
+        
+        app_logger.info(f"总共成功写入 {total_saved} 条K线数据到数据库")
         
     except Exception as e:
         app_logger.error(f"保存数据到数据库时发生错误: {str(e)}")

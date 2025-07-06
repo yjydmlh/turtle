@@ -1,3 +1,5 @@
+from typing import Optional
+
 from pydantic import BaseModel
 from datetime import datetime
 from decimal import Decimal
@@ -20,7 +22,7 @@ class BtcUsdtKlineCreate(BtcUsdtKlineBase):
     pass
 
 class BtcUsdtKline(BtcUsdtKlineBase):
-    id: int
+    id: Optional[int] = None
     created_at: datetime
     updated_at: datetime
 

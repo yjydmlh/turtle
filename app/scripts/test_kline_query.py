@@ -139,12 +139,31 @@ from sqlalchemy.exc import DatabaseError
 from app.db.session import engine
 from app.core.config import settings
 from sqlalchemy import select
+from sqlalchemy import insert
 
 if __name__ == "__main__":
-    stmt = select(BtcUsdtKline).limit(10)
+    stmt = select(BtcUsdtKline).order_by(BtcUsdtKline.created_at.desc()).limit(10)
     with SessionLocal() as db:
         for kline in db.scalars(stmt):
             print("原始数据:", vars(kline))
+
+        btc_usdt_kline = BtcUsdtKline(timestamp=1680000000,
+                                      open_price=1.0,
+                                      close_price=2.0,
+                                      open_time=datetime.now(),
+                                      close_time=datetime.now(),
+                                      volume=3.0,
+                                      quote_volume=4.0,
+                                      trades_count=5,
+                                      taker_buy_volume=6.0,
+                                      high_price=3.0,
+                                      low_price=2.0,
+                                      created_at=datetime.now(),
+                                      updated_at=datetime.now(),
+                                      taker_buy_quote_volume=7.0)
+        db.add(btc_usdt_kline)
+        db.commit()
+
 
     # engine = create_engine("postgresql://postgres:123456@127.0.0.1:5532/postgres")
     # engine = create_engine(
