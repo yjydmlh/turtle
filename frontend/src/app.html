@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="h-full">
+<head>
+    <meta charset="utf-8" />
+    <link rel="icon" href="%sveltekit.assets%/favicon.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="缠论分析系统 - 基于缠中说禅理论的专业技术分析平台，支持实时K线分析、分型识别、笔段构建" />
+    <meta name="keywords" content="缠论,技术分析,K线分析,分型,笔,线段,交易分析,比特币,数字货币" />
+    <meta name="author" content="Chan Analysis Team" />
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="缠论分析系统" />
+    <meta property="og:description" content="专业的缠论技术分析平台" />
+    <meta property="og:image" content="%sveltekit.assets%/og-image.png" />
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:title" content="缠论分析系统" />
+    <meta property="twitter:description" content="专业的缠论技术分析平台" />
+    <meta property="twitter:image" content="%sveltekit.assets%/twitter-image.png" />
+
+    <!-- Favicon and Icons -->
+    <link rel="apple-touch-icon" sizes="180x180" href="%sveltekit.assets%/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="%sveltekit.assets%/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="%sveltekit.assets%/favicon-16x16.png">
+    <link rel="manifest" href="%sveltekit.assets%/site.webmanifest">
+
+    <!-- Theme Color -->
+    <meta name="theme-color" content="#2563eb" />
+    <meta name="msapplication-TileColor" content="#2563eb">
+
+    <!-- Preconnect to External Domains -->
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+
+    <!-- Critical CSS (will be injected by Vite) -->
+    %sveltekit.head%
+
+    <title>🐢 缠论分析系统</title>
+
+    <!-- 自定义CSS变量 -->
+    <style>
+        :root {
+            --color-chan-primary: #2563eb;
+            --color-chan-secondary: #1e40af;
+            --color-bull: #22c55e;
+            --color-bear: #ef4444;
+            --color-neutral: #6b7280;
+
+            /* 图表颜色 */
+            --chart-bg: #ffffff;
+            --chart-grid: #f0f0f0;
+            --chart-text: #374151;
+            --chart-border: #e5e7eb;
+
+            /* 动画时长 */
+            --animation-fast: 0.15s;
+            --animation-normal: 0.3s;
+            --animation-slow: 0.5s;
+
+            /* 圆角 */
+            --radius-sm: 0.375rem;
+            --radius-md: 0.5rem;
+            --radius-lg: 0.75rem;
+            --radius-xl: 1rem;
+
+            /* 阴影 */
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        /* 黑暗模式支持 */
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --chart-bg: #1f2937;
+                --chart-grid: #374151;
+                --chart-text: #f3f4f6;
+                --chart-border: #4b5563;
+            }
+        }
+
+        /* 全局样式重置 */
+        * {
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: #374151;
+            background-color: #f9fafb;
+            overflow-x: hidden;
+        }
+
+        /* 加载动画 */
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* 滚动条样式 */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        /* 选择文本样式 */
+        ::selection {
+            background-color: rgba(37, 99, 235, 0.2);
+            color: #1e40af;
+        }
+
+        /* 焦点样式 */
+        :focus-visible {
+            outline: 2px solid var(--color-chan-primary);
+            outline-offset: 2px;
+        }
+
+        /* 禁用状态 */
+        :disabled {
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        /* 响应式字体大小 */
+        @media (max-width: 768px) {
+            html {
+                font-size: 14px;
+            }
+        }
+
+        /* 打印样式 */
+        @media print {
+            body {
+                background: white;
+                color: black;
+            }
+
+            .no-print {
+                display: none;
+            }
+        }
+
+        /* 高对比度模式支持 */
+        @media (prefers-contrast: high) {
+            :root {
+                --color-chan-primary: #000080;
+                --color-bull: #006400;
+                --color-bear: #8b0000;
+            }
+        }
+
+        /* 减少动画偏好支持 */
+        @media (prefers-reduced-motion: reduce) {
+            *,
+            *::before,
+            *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+    </style>
+</head>
+<body data-sveltekit-preload-data="hover" class="h-full bg-gray-50 antialiased">
+    <!-- 应用容器 -->
+    <div id="app" style="display: contents">%sveltekit.body%</div>
+
+    <!-- 全局加载指示器 -->
+    <div id="global-loading" class="fixed inset-0 bg-white bg-opacity-90 flex items-center justify-center z-50 hidden">
+        <div class="text-center">
+            <div class="loading-spinner mb-4"></div>
+            <p class="text-gray-600">加载中...</p>
+        </div>
+    </div>
+
+    <!-- 错误提示容器 -->
+    <div id="error-toast" class="fixed top-4 right-4 z-50 hidden">
+        <!-- 错误提示将由JavaScript动态插入 -->
+    </div>
+
+    <!-- 版本信息（开发模式显示） -->
+    <script>
+        // 全局错误处理
+        window.addEventListener('error', function(e) {
+            console.error('全局错误:', e.error);
+        });
+
+        window.addEventListener('unhandledrejection', function(e) {
+            console.error('未处理的Promise拒绝:', e.reason);
+        });
+
+        // 性能监控
+        window.addEventListener('load', function() {
+            if ('performance' in window) {
+                const loadTime = performance.timing.loadEventEnd - performance.timing.navigationStart;
+                console.log(`页面加载时间: ${loadTime}ms`);
+            }
+        });
+
+        // 开发模式信息
+        if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
+            console.log('🐢 缠论分析系统 - 开发模式');
+            console.log('📍 前端: http://localhost:3000');
+            console.log('📍 后端: http://localhost:8000');
+            console.log('📚 API文档: http://localhost:8000/api/v1/docs');
+        }
+    </script>
+</body>
+</html>
