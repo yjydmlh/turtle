@@ -1,0 +1,16 @@
+{
+  "name": "缠论分析系统",
+  "short_name": "缠论分析",
+  "description": "基于缠中说禅理论的专业技术分析平台",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#2563eb",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}

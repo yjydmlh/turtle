@@ -2,10 +2,13 @@
 __pycache__/
 *.py[cod]
 *$py.class
-
+*/.svelte-kit/
+.lingma/
+alembic.ini
 # C extensions
 *.so
-
+.idea/
+*/node_modules/
 # Distribution / packaging
 .Python
 build/

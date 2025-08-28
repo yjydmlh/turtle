@@ -1,11 +1,12 @@
-/* Tailwind CSS directives */
+/* Tailwind CSS directives/* 缠论分析系统 - 全局样式 */
+
+/* Google Fonts - 必须在最前面 */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-/* Google Fonts */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap');
 
 /* Base layer - 全局基础样式 */
 @layer base {

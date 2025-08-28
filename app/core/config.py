@@ -28,7 +28,7 @@ class Settings(BaseSettings):
     WS_PORT: int = int(os.getenv("WS_PORT", 8001))
 
     # 数据库配置
-    DATABASE_URL: str = os.getenv("DATABASE_URL", "postgresql://postgres:123456@127.0.0.1:5532/postgres?client_encoding=utf8")
+    DATABASE_URL: str = os.getenv("DATABASE_URL", "postgresql://postgres:123456@127.0.0.1:5532/btc_usdt?client_encoding=utf8")
     
     # CORS配置
     CORS_ORIGINS: List[str] = field(default_factory=lambda: ["*"])

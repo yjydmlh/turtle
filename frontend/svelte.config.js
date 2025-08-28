@@ -30,7 +30,7 @@ const config = {
     csp: {
       mode: 'auto',
       directives: {
-        'script-src': ['self']
+        'script-src': ['self', 'unsafe-inline']
       }
     }
   }
