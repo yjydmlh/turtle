@@ -7,23 +7,21 @@ export default defineConfig({
   server: {
     port: 3000,
     host: true,
+    // 性能优化
+    hmr: {
+      overlay: false // 减少错误覆盖层的性能影响
+    },
+    fs: {
+      // 允许访问工作区根目录
+      allow: ['..', '..']
+    },
     proxy: {
       // 代理API请求到后端
       '/api': {
         target: 'http://localhost:8000',
         changeOrigin: true,
-        secure: false,
-        configure: (proxy, _options) => {
-          proxy.on('error', (err, _req, _res) => {
-            console.log('proxy error', err);
-          });
-          proxy.on('proxyReq', (proxyReq, req, _res) => {
-            console.log('Sending Request to the Target:', req.method, req.url);
-          });
-          proxy.on('proxyRes', (proxyRes, req, _res) => {
-            console.log('Received Response from the Target:', proxyRes.statusCode, req.url);
-          });
-        }
+        secure: false
+        // 移除详细日志以提升性能
       }
     }
   },
@@ -32,17 +30,26 @@ export default defineConfig({
     target: 'es2020',
     rollupOptions: {
       output: {
-        manualChunks: {
-          // 将大型库分离到单独的chunk中
-          'charts': ['lightweight-charts'],
-          'vendor': ['lucide-svelte', 'clsx', 'tailwind-merge']
+        // 自动代码分割
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            return 'vendor';
+          }
         }
       }
     }
   },
 
   optimizeDeps: {
-    include: ['lightweight-charts', 'lucide-svelte']
+    include: ['lightweight-charts', 'lucide-svelte', 'clsx', 'tailwind-merge'],
+    // 强制预构建依赖以提升性能
+    force: false
+  },
+
+  // 性能优化
+  esbuild: {
+    // 在开发模式下保持快速构建
+    target: 'es2020'
   },
 
   define: {

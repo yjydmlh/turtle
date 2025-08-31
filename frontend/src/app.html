@@ -28,12 +28,17 @@
     <link rel="icon" type="image/png" sizes="16x16" href="%sveltekit.assets%/favicon-16x16.png">
     <link rel="manifest" href="%sveltekit.assets%/site.webmanifest">
 
+    <!-- 资源预加载提示 -->
+    <link rel="preload" href="/fonts/fonts.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="/fonts/fonts.css"></noscript>
+    <link rel="preload" href="/fonts/inter-400.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="/fonts/inter-500.woff2" as="font" type="font/woff2" crossorigin>
+
     <!-- Theme Color -->
     <meta name="theme-color" content="#2563eb" />
     <meta name="msapplication-TileColor" content="#2563eb">
 
-    <!-- Preconnect to External Domains -->
-    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+    <!-- 已移除外部CDN链接，使用本地资源 -->
 
     <!-- Critical CSS (will be injected by Vite) -->
     %sveltekit.head%
