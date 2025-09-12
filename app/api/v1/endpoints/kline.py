@@ -25,8 +25,8 @@ def read_kline(
     *,
     db: Session = Depends(deps.get_db),
     symbol: str,
-    skip: int = 0,
-    limit: int = 100,
+    skip: int = Query(0, ge=0, description="跳过的记录数"),
+    limit: int = Query(100, ge=1, le=1000, description="返回的记录数限制"),
 ):
     """获取K线数据列表"""
     app_logger.debug(f"Fetching kline data for symbol: {symbol}, skip: {skip}, limit: {limit}")
@@ -97,8 +97,8 @@ def read_kline_by_time_range(
 @router.get("/btc_usdt/", response_model=List[BtcUsdtKline])
 def get_btc_usdt_klines(
     db: Session = Depends(deps.get_db),
-    skip: int = 0,
-    limit: int = 100
+    skip: int = Query(0, ge=0, description="跳过的记录数"),
+    limit: int = Query(100, ge=1, le=1000, description="返回的记录数限制")
 ):
     """获取BTC/USDT K线数据列表"""
     try:
@@ -192,4 +192,4 @@ def read_aggregated_kline(
             code=500,
             message="获取聚合K线数据失败",
             data={"error": str(e)}
-        ) 
+        )

@@ -82,30 +82,27 @@ class CRUDKline:
         try:
             app_logger.debug(f"Getting multiple kline records for symbol: {symbol}, skip: {skip}, limit: {limit}")
             model = self.get_model(symbol)
-            # 使用text()函数包装查询，确保编码正确
-            result = db.execute(
-                text("SELECT * FROM btc_usdt ORDER BY open_time DESC LIMIT :limit OFFSET :skip"),
-                {"limit": limit, "skip": skip}
-            ).mappings().all()
+            # 使用ORM查询，更安全且支持多表
+            query_result = db.query(model).order_by(model.open_time.desc()).offset(skip).limit(limit).all()
             
             # 将查询结果转换为字典列表
             klines = []
-            for row in result:
+            for kline in query_result:
                 kline_dict = {
-                    "id": row['id'],
-                    "open_time": row['open_time'].isoformat(),
-                    "close_time": row['close_time'].isoformat(),
-                    "open_price": str(row['open_price']),
-                    "high_price": str(row['high_price']),
-                    "low_price": str(row['low_price']),
-                    "close_price": str(row['close_price']),
-                    "volume": str(row['volume']),
-                    "quote_volume": str(row['quote_volume']),
-                    "trades_count": row['trades_count'],
-                    "taker_buy_volume": str(row['taker_buy_volume']),
-                    "taker_buy_quote_volume": str(row['taker_buy_quote_volume']),
-                    "created_at": row['created_at'].isoformat(),
-                    "updated_at": row['updated_at'].isoformat()
+                    "id": kline.id,
+                    "open_time": kline.open_time.isoformat(),
+                    "close_time": kline.close_time.isoformat(),
+                    "open_price": str(kline.open_price),
+                    "high_price": str(kline.high_price),
+                    "low_price": str(kline.low_price),
+                    "close_price": str(kline.close_price),
+                    "volume": str(kline.volume),
+                    "quote_volume": str(kline.quote_volume),
+                    "trades_count": kline.trades_count,
+                    "taker_buy_volume": str(kline.taker_buy_volume),
+                    "taker_buy_quote_volume": str(kline.taker_buy_quote_volume),
+                    "created_at": kline.created_at.isoformat(),
+                    "updated_at": kline.updated_at.isoformat()
                 }
                 klines.append(kline_dict)
             
@@ -355,4 +352,4 @@ class CRUDKline:
             app_logger.error(f"Error creating kline records: {str(e)}", exc_info=True)
             raise
 
-kline = CRUDKline() 
+kline = CRUDKline()

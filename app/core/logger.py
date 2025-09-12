@@ -23,8 +23,8 @@ console_handler.setFormatter(formatter)
 # 创建文件处理器
 file_handler = RotatingFileHandler(
     filename=str(Path(settings.LOG_FILE)),
-    maxBytes=10*1024*1024,  # 10MB
-    backupCount=5,
+    maxBytes=50*1024*1024,  # 50MB
+    backupCount=10,
     encoding='utf-8'
 )
 file_handler.setLevel(settings.LOG_LEVEL)
@@ -42,4 +42,4 @@ logging.getLogger("sqlalchemy.engine").setLevel(logging.INFO)
 db_logger = logging.getLogger("sqlalchemy.engine")
 db_logger.setLevel(settings.LOG_LEVEL)
 db_logger.addHandler(console_handler)
-db_logger.addHandler(file_handler) 
+db_logger.addHandler(file_handler)

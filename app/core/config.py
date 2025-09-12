@@ -10,11 +10,15 @@ load_dotenv()
 
 class Settings(BaseSettings):
     APP_NAME: str = os.getenv("APP_NAME", "turtle")
-    PROJECT_NAME: str = os.getenv("PROJECT_NAME", "turtle")
-    DEBUG: bool = os.getenv("DEBUG", True)
-    SECRET_KEY: str = os.getenv("SECRET_KEY", "your-super-secret-key-here")
+    PROJECT_NAME: str = os.getenv("PROJECT_NAME", "Turtle Trading System")
+    DEBUG: bool = os.getenv("DEBUG", "False").lower() == "true"
+    SECRET_KEY: str = os.getenv("SECRET_KEY", "")
     ALGORITHM: str = os.getenv("ALGORITHM", "HS256")
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", 30))
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30"))
+    
+    def __post_init__(self):
+        if not self.SECRET_KEY:
+            raise ValueError("SECRET_KEY environment variable must be set")
     
     # API settings
     API_V1_STR: str = "/api/v1"
@@ -59,4 +63,4 @@ class Settings(BaseSettings):
         case_sensitive = True
         env_file = ".env"
 
-settings = Settings() 
+settings = Settings()
