@@ -28,6 +28,12 @@
     <link rel="icon" type="image/png" sizes="16x16" href="%sveltekit.assets%/favicon-16x16.png">
     <link rel="manifest" href="%sveltekit.assets%/site.webmanifest">
 
+    <!-- 性能优化：预加载关键资源 -->
+    <link rel="dns-prefetch" href="//localhost:8000">
+    
+    <!-- 预连接到API服务器 -->
+    <link rel="preconnect" href="http://localhost:8000" crossorigin>
+
     <!-- 资源预加载提示 -->
     <link rel="preload" href="/fonts/fonts.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <noscript><link rel="stylesheet" href="/fonts/fonts.css"></noscript>

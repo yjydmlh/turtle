@@ -14,8 +14,13 @@
     let chanModuleInfo = null;
 
     onMount(() => {
+        // 优先加载关键数据
         loadData();
-        loadChanInfo();
+        
+        // 延迟加载非关键数据
+        setTimeout(() => {
+            loadChanInfo();
+        }, 500);
     });
 
     async function loadData() {

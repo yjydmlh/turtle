@@ -125,20 +125,18 @@ async function del(endpoint) {
 
 // 获取支持的时间周期
 export async function getTimeframes() {
-    return await get('/simple/timeframes');
+    return await getCached('/simple/timeframes', {}, STATIC_CACHE_DURATION);
 }
 
 // 获取K线数据
 export async function getKlines(timeframe = '1h', limit = 200, startTime = null, endTime = null) {
-    const params = {
-        timeframe,
-        limit
-    };
-
+    const params = { timeframe, limit };
     if (startTime) params.start_time = startTime;
     if (endTime) params.end_time = endTime;
-
-    return await get('/simple/klines', params);
+    
+    // 历史数据使用较长缓存，实时数据使用短缓存
+    const cacheDuration = startTime || endTime ? CACHE_DURATION : REALTIME_CACHE_DURATION;
+    return await getCached('/simple/klines', params, cacheDuration);
 }
 
 // 获取最新K线数据
@@ -232,9 +230,11 @@ export async function getSystemInfo() {
 // 数据处理和缓存
 // =============================================================================
 
-// 内存缓存
+// 缓存管理
 const cache = new Map();
 const CACHE_DURATION = 5 * 60 * 1000; // 5分钟
+const STATIC_CACHE_DURATION = 30 * 60 * 1000; // 30分钟（用于相对静态的数据）
+const REALTIME_CACHE_DURATION = 30 * 1000; // 30秒（用于实时数据）
 
 // 缓存键生成
 function getCacheKey(endpoint, params) {

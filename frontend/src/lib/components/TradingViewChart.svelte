@@ -93,7 +93,10 @@
         }
     };
 
-    onMount(() => {
+    onMount(async () => {
+        // 延迟初始化图表以提升页面加载速度
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
         initializeChart();
         setupResizeObserver();
 
