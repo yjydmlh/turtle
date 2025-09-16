@@ -62,7 +62,9 @@
         },
         rightPriceScale: {
             borderColor: '#e0e0e0',
-            scaleMargins: { top: 0.1, bottom: 0.1 }
+            scaleMargins: { top: 0.05, bottom: 0.15 }, // 减少顶部边距，为成交量留出底部空间
+            mode: PriceScaleMode.Normal,
+            autoScale: true
         },
         timeScale: {
             borderColor: '#e0e0e0',
@@ -173,7 +175,9 @@
                     type: 'price',
                     precision: 2,
                     minMove: 0.01
-                }
+                },
+                // 确保K线使用主价格刻度
+                priceScaleId: 'right'
             });
 
             // 创建成交量序列
@@ -184,21 +188,35 @@
                 },
                 priceScaleId: 'volume',
                 scaleMargins: {
-                    top: 0.7,
+                    top: 0.8, // 成交量占用底部20%空间
                     bottom: 0
                 }
             });
 
-            // 设置价格刻度
+            // 设置成交量价格刻度
             chart.priceScale('volume').applyOptions({
                 scaleMargins: {
-                    top: 0.7,
+                    top: 0.8,
                     bottom: 0
                 }
+            });
+
+            // 设置主价格刻度（K线）
+            chart.priceScale('right').applyOptions({
+                scaleMargins: {
+                    top: 0.05,
+                    bottom: 0.15
+                },
+                autoScale: true
             });
 
             // 添加图表事件监听
             setupChartEventListeners();
+
+            // 初始化完成后自动调整价格范围
+            setTimeout(() => {
+                autoScalePrice();
+            }, 200);
 
             isLoading = false;
         } catch (err) {
@@ -293,8 +311,24 @@
             candlestickSeries.setData(candleData);
             volumeSeries.setData(volumeData);
 
-            // 自动调整视图
+            // 自动调整视图和价格范围
             chart.timeScale().fitContent();
+            
+            // 延迟执行价格范围调整，确保数据已完全加载
+            setTimeout(() => {
+                if (chart && candleData.length > 0) {
+                    // 自动缩放到合适的价格范围
+                    chart.timeScale().fitContent();
+                    
+                    // 确保K线占据主要显示区域
+                    const priceScale = chart.priceScale('right');
+                    if (priceScale) {
+                        priceScale.applyOptions({
+                            autoScale: true
+                        });
+                    }
+                }
+            }, 100);
 
         } catch (err) {
             console.error('更新图表数据失败:', err);
@@ -490,8 +524,43 @@
 
         try {
             chart.timeScale().fitContent();
+            
+            // 同时调整价格范围
+            const priceScale = chart.priceScale('right');
+            if (priceScale) {
+                priceScale.applyOptions({
+                    autoScale: true
+                });
+            }
         } catch (err) {
             console.error('自适应视图失败:', err);
+        }
+    }
+
+    // 自动调整价格范围到数据范围
+    export function autoScalePrice() {
+        if (!chart || !candlestickSeries) return;
+
+        try {
+            // 获取可见时间范围
+            const timeScale = chart.timeScale();
+            const visibleRange = timeScale.getVisibleRange();
+            
+            if (visibleRange) {
+                // 强制重新计算价格范围
+                const priceScale = chart.priceScale('right');
+                if (priceScale) {
+                    priceScale.applyOptions({
+                        autoScale: true,
+                        scaleMargins: {
+                            top: 0.05,
+                            bottom: 0.15
+                        }
+                    });
+                }
+            }
+        } catch (err) {
+            console.error('自动调整价格范围失败:', err);
         }
     }
 
@@ -565,6 +634,14 @@
             title="自适应视图"
         >
             📐
+        </button>
+
+        <button
+            on:click={autoScalePrice}
+            class="bg-white bg-opacity-90 hover:bg-opacity-100 text-gray-700 text-xs px-2 py-1 rounded shadow-sm border border-gray-200 transition-all"
+            title="自动调整价格范围"
+        >
+            📊
         </button>
 
         <button
