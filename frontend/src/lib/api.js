@@ -163,12 +163,44 @@ export async function checkKlineHealth() {
 }
 
 // =============================================================================
+// 数据库K线数据API - 直接从PostgreSQL查询btc_usdt表
+// =============================================================================
+
+// 获取数据库K线数据（支持1分钟原始数据和聚合数据）
+export async function getDatabaseKlines(timeframe = '1m', limit = 1000, startTime = null, endTime = null) {
+    const params = { timeframe, limit };
+    if (startTime) params.start_time = startTime;
+    if (endTime) params.end_time = endTime;
+    
+    return await get('/database/klines', params);
+}
+
+// 获取数据库最新K线数据
+export async function getDatabaseLatestKlines(timeframe = '1m', count = 100) {
+    return await get('/database/latest', { timeframe, count });
+}
+
+// 获取数据库图表数据（优化格式）
+export async function getDatabaseChartData(symbol = 'btc_usdt', timeframe = '1h', limit = 100, startTime = null, endTime = null) {
+    const params = { symbol, timeframe, limit };
+    if (startTime) params.start_time = startTime;
+    if (endTime) params.end_time = endTime;
+    
+    return await get('/api/v1/database/chart-data', params);
+}
+
+// 获取数据库统计信息
+export async function getDatabaseStatistics() {
+    return await get('/database/statistics');
+}
+
+// =============================================================================
 // 缠论分析相关API
 // =============================================================================
 
 // 获取Chan模块信息
 export async function getChanModuleInfo() {
-    return await get('/chan/info');
+    return await get('/api/v1/chan/info');
 }
 
 // 执行缠论分析

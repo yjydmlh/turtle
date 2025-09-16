@@ -1,6 +1,8 @@
 from typing import List, Optional, Type
+
+from fastapi import HTTPException
 from sqlalchemy.orm import Session
-from datetime import datetime
+from datetime import datetime, timedelta
 from app.models.kline import BtcUsdtKline, SYMBOL_TO_MODEL
 from app.schemas.kline import BtcUsdtKlineCreate, BtcUsdtKline
 from app.core.logger import app_logger
@@ -75,6 +77,18 @@ class CRUDKline:
             app_logger.error(f"Error getting kline record by timestamp: {str(e)}", exc_info=True)
             raise
 
+    def get_count(self, db: Session, *, symbol: str) -> int:
+        """获取指定交易品种的K线数据总数"""
+        try:
+            app_logger.debug(f"Getting count for symbol: {symbol}")
+            model = self.get_model(symbol)
+            count = db.query(model).count()
+            app_logger.debug(f"Count for {symbol}: {count}")
+            return count
+        except Exception as e:
+            app_logger.error(f"Error getting count for symbol {symbol}: {str(e)}", exc_info=True)
+            return 0
+
     def get_multi(
         self, db: Session, *, symbol: str, skip: int = 0, limit: int = 100
     ) -> List[dict]:
@@ -90,6 +104,7 @@ class CRUDKline:
             for kline in query_result:
                 kline_dict = {
                     "id": kline.id,
+                    "timestamp": kline.timestamp,
                     "open_time": kline.open_time.isoformat(),
                     "close_time": kline.close_time.isoformat(),
                     "open_price": str(kline.open_price),
@@ -178,178 +193,138 @@ class CRUDKline:
         self, 
         db: Session, 
         *, 
-        interval_minutes: int,
-        start_time: datetime,
-        end_time: datetime
-    ) -> List[BtcUsdtKline]:
-        """使用原生SQL查询获取聚合后的K线数据"""
+        symbol: str = "btc_usdt",
+        interval_minutes: int = 1,
+        start_time: datetime = None,
+        end_time: datetime = None,
+        limit: int = 1000
+    ) -> List[dict]:
+        """获取K线数据 - 优化版本，支持不同时间间隔和时间范围查询"""
         try:
-            app_logger.debug(f"Getting aggregated kline data for interval: {interval_minutes} minutes")
-            sql = text("""
-                SELECT 
-                    EXTRACT(EPOCH FROM time_bucket(:interval_minutes * '1 minute', k.open_time))::BIGINT * 1000 as timestamp,
-                    time_bucket(:interval_minutes * '1 minute', k.open_time) as open_time,
-                    time_bucket(:interval_minutes * '1 minute', k.open_time) + (:interval_minutes * '1 minute') as close_time,
-                    FIRST(k.open_price, k.open_time) as open_price,
-                    MAX(k.high_price) as high_price,
-                    MIN(k.low_price) as low_price,
-                    LAST(k.close_price, k.open_time) as close_price,
-                    SUM(k.volume) as volume,
-                    SUM(k.quote_volume) as quote_volume,
-                    SUM(k.trades_count) as trades_count,
-                    SUM(k.taker_buy_volume) as taker_buy_volume,
-                    SUM(k.taker_buy_quote_volume) as taker_buy_quote_volume,
-                    MAX(k.created_at) as created_at,
-                    MAX(k.updated_at) as updated_at
-                FROM btc_usdt k
-                WHERE k.open_time >= :start_time AND k.open_time < :end_time
-                GROUP BY time_bucket(:interval_minutes * '1 minute', k.open_time)
-                ORDER BY time_bucket(:interval_minutes * '1 minute', k.open_time)
-            """)
+            app_logger.debug(f"Getting kline data for symbol: {symbol}, interval: {interval_minutes} minutes")
+            model = self.get_model(symbol)
             
-            result = db.execute(
-                sql,
-                {
-                    "interval_minutes": interval_minutes,
-                    "start_time": start_time,
-                    "end_time": end_time
-                }
-            ).mappings().all()
+            # 构建基础查询
+            query = db.query(model)
             
-            # 将查询结果转换为BtcUsdtKline模型对象
+            # 添加时间范围过滤
+            if start_time:
+                query = query.filter(model.open_time >= start_time)
+            if end_time:
+                query = query.filter(model.open_time < end_time)
+            
+            # 对于所有时间间隔，都使用简化的查询逻辑
+            # 直接获取原始数据，在应用层进行聚合（更快）
+            query_result = query.order_by(model.open_time.desc()).limit(limit * 10).all()
+            
+            # 转换为字典格式
             klines = []
-            for row in result:
-                kline = BtcUsdtKline(
-                    open_time=row['open_time'],
-                    close_time=row['close_time'],
-                    open_price=row['open_price'],
-                    high_price=row['high_price'],
-                    low_price=row['low_price'],
-                    close_price=row['close_price'],
-                    volume=row['volume'],
-                    quote_volume=row['quote_volume'],
-                    trades_count=row['trades_count'],
-                    taker_buy_volume=row['taker_buy_volume'],
-                    taker_buy_quote_volume=row['taker_buy_quote_volume'],
-                    created_at=row['created_at'],
-                    updated_at=row['updated_at']
-                )
-                klines.append(kline)
+            for kline in query_result:
+                kline_dict = {
+                    "timestamp": kline.timestamp,
+                    "open_time": kline.open_time.isoformat(),
+                    "close_time": kline.close_time.isoformat(),
+                    "open_price": float(kline.open_price),
+                    "high_price": float(kline.high_price),
+                    "low_price": float(kline.low_price),
+                    "close_price": float(kline.close_price),
+                    "volume": float(kline.volume),
+                    "quote_volume": float(kline.quote_volume),
+                    "trades_count": kline.trades_count,
+                    "taker_buy_volume": float(kline.taker_buy_volume),
+                    "taker_buy_quote_volume": float(kline.taker_buy_quote_volume)
+                }
+                klines.append(kline_dict)
+            
+            # 如果需要聚合（非1分钟数据），在这里进行简单聚合
+            if interval_minutes > 1:
+                klines = self._aggregate_klines(klines, interval_minutes, limit)
+            else:
+                klines = klines[:limit]  # 限制返回数量
             
             app_logger.debug(f"Successfully fetched {len(klines)} aggregated kline records")
             return klines
+            
         except Exception as e:
-            app_logger.error(f"Error getting aggregated kline data: {str(e)}", exc_info=True)
-            raise
-
-    def get_by_id_and_time(
-        self, 
-        db: Session, 
-        *, 
-        id: int,
-        open_time: datetime
-    ) -> Optional[BtcUsdtKline]:
-        """根据ID和开盘时间获取K线数据"""
-        try:
-            app_logger.debug(f"Getting kline record for id: {id}, open_time: {open_time}")
-            result = db.query(BtcUsdtKline).filter(
-                BtcUsdtKline.id == id,
-                BtcUsdtKline.open_time == open_time
-            ).first()
-            if result:
-                app_logger.debug(f"Successfully fetched kline record with id: {id}")
-            return result
-        except Exception as e:
-            app_logger.error(f"Error getting kline record: {str(e)}", exc_info=True)
-            raise
-
-    def get_by_timestamp(
-        self, 
-        db: Session, 
-        *, 
-        timestamp: int
-    ) -> Optional[BtcUsdtKline]:
-        """根据时间戳获取K线数据"""
-        try:
-            app_logger.debug(f"Getting kline record for timestamp: {timestamp}")
-            result = db.query(BtcUsdtKline).filter(
-                BtcUsdtKline.timestamp == timestamp
-            ).first()
-            if result:
-                app_logger.debug(f"Successfully fetched kline record with timestamp: {timestamp}")
-            return result
-        except Exception as e:
-            app_logger.error(f"Error getting kline record: {str(e)}", exc_info=True)
-            raise
-
-    def create(
-        self, 
-        db: Session, 
-        *, 
-        obj_in: BtcUsdtKlineCreate
-    ) -> BtcUsdtKline:
-        """创建新的K线数据"""
-        try:
-            app_logger.debug("Creating new kline record")
-            db_obj = BtcUsdtKline(
-                timestamp=obj_in.timestamp,
-                open_time=obj_in.open_time,
-                close_time=obj_in.close_time,
-                open_price=obj_in.open_price,
-                high_price=obj_in.high_price,
-                low_price=obj_in.low_price,
-                close_price=obj_in.close_price,
-                volume=obj_in.volume,
-                quote_volume=obj_in.quote_volume,
-                trades_count=obj_in.trades_count,
-                taker_buy_volume=obj_in.taker_buy_volume,
-                taker_buy_quote_volume=obj_in.taker_buy_quote_volume,
-                created_at=datetime.now(),
-                updated_at=datetime.now()
-            )
-            db.add(db_obj)
-            db.commit()
-            db.refresh(db_obj)
-            app_logger.debug(f"Successfully created kline record with id: {db_obj.id}")
-            return db_obj
-        except Exception as e:
-            app_logger.error(f"Error creating kline record: {str(e)}", exc_info=True)
-            raise
-
-    def bulk_create(
-        self, 
-        db: Session, 
-        *, 
-        obj_in_list: List[BtcUsdtKlineCreate]
-    ) -> List[BtcUsdtKline]:
-        """批量创建K线数据"""
-        try:
-            app_logger.debug(f"Creating {len(obj_in_list)} kline records")
-            db_objs = []
-            for obj_in in obj_in_list:
-                db_obj = BtcUsdtKline(
-                    timestamp=obj_in.timestamp,
-                    open_time=obj_in.open_time,
-                    close_time=obj_in.close_time,
-                    open_price=obj_in.open_price,
-                    high_price=obj_in.high_price,
-                    low_price=obj_in.low_price,
-                    close_price=obj_in.close_price,
-                    volume=obj_in.volume,
-                    quote_volume=obj_in.quote_volume,
-                    trades_count=obj_in.trades_count,
-                    taker_buy_volume=obj_in.taker_buy_volume,
-                    taker_buy_quote_volume=obj_in.taker_buy_quote_volume,
-                    created_at=datetime.now(),
-                    updated_at=datetime.now()
-                )
-                db_objs.append(db_obj)
-            db.bulk_save_objects(db_objs)
-            db.commit()
-            app_logger.debug(f"Successfully created {len(db_objs)} kline records")
-            return db_objs
-        except Exception as e:
-            app_logger.error(f"Error creating kline records: {str(e)}", exc_info=True)
-            raise
+            app_logger.error(f"Error getting kline data: {str(e)}")
+            raise HTTPException(status_code=500, detail=f"Failed to get kline data: {str(e)}")
+    
+    def _aggregate_klines(self, klines: List[dict], interval_minutes: int, limit: int) -> List[dict]:
+        """在应用层进行K线数据聚合，比数据库聚合更快"""
+        from datetime import datetime, timedelta
+        
+        if not klines:
+            return []
+        
+        # 按时间间隔分组
+        grouped_data = {}
+        
+        for kline in klines:
+            # 解析时间
+            open_time = datetime.fromisoformat(kline['open_time'].replace('Z', '+00:00'))
+            
+            # 计算时间桶
+            if interval_minutes == 60:  # 1小时
+                bucket_time = open_time.replace(minute=0, second=0, microsecond=0)
+            elif interval_minutes == 240:  # 4小时
+                hour_bucket = (open_time.hour // 4) * 4
+                bucket_time = open_time.replace(hour=hour_bucket, minute=0, second=0, microsecond=0)
+            elif interval_minutes == 1440:  # 1天
+                bucket_time = open_time.replace(hour=0, minute=0, second=0, microsecond=0)
+            else:  # 其他间隔，简单按小时分组
+                bucket_time = open_time.replace(minute=0, second=0, microsecond=0)
+            
+            bucket_key = bucket_time.isoformat()
+            
+            if bucket_key not in grouped_data:
+                grouped_data[bucket_key] = {
+                    'open_time': bucket_time,
+                    'close_time': bucket_time + timedelta(minutes=interval_minutes),
+                    'open_price': kline['open_price'],
+                    'close_price': kline['close_price'],
+                    'high_price': kline['high_price'],
+                    'low_price': kline['low_price'],
+                    'volume': 0,
+                    'quote_volume': 0,
+                    'trades_count': 0,
+                    'taker_buy_volume': 0,
+                    'taker_buy_quote_volume': 0,
+                    'timestamp': int(bucket_time.timestamp() * 1000)
+                }
+            
+            # 聚合数据
+            group = grouped_data[bucket_key]
+            group['high_price'] = max(group['high_price'], kline['high_price'])
+            group['low_price'] = min(group['low_price'], kline['low_price'])
+            group['volume'] += kline['volume']
+            group['quote_volume'] += kline['quote_volume']
+            group['trades_count'] += kline['trades_count']
+            group['taker_buy_volume'] += kline['taker_buy_volume']
+            group['taker_buy_quote_volume'] += kline['taker_buy_quote_volume']
+            
+            # 更新收盘价（最新的数据）
+            if datetime.fromisoformat(kline['open_time'].replace('Z', '+00:00')) >= open_time:
+                group['close_price'] = kline['close_price']
+        
+        # 转换为列表并排序
+        result = []
+        for bucket_key in sorted(grouped_data.keys(), reverse=True):
+            group = grouped_data[bucket_key]
+            result.append({
+                'timestamp': group['timestamp'],
+                'open_time': group['open_time'].isoformat(),
+                'close_time': group['close_time'].isoformat(),
+                'open_price': group['open_price'],
+                'high_price': group['high_price'],
+                'low_price': group['low_price'],
+                'close_price': group['close_price'],
+                'volume': group['volume'],
+                'quote_volume': group['quote_volume'],
+                'trades_count': group['trades_count'],
+                'taker_buy_volume': group['taker_buy_volume'],
+                'taker_buy_quote_volume': group['taker_buy_quote_volume']
+            })
+        
+        return result[:limit]
 
 kline = CRUDKline()

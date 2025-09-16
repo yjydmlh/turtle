@@ -6,12 +6,13 @@
     import FenxingList from '$lib/components/FenxingList.svelte';
     import TradingSuggestion from '$lib/components/TradingSuggestion.svelte';
     import { klineStore, analysisStore, settingsStore, loadingStore, errorStore } from '$lib/stores.js';
-    import { loadChartData, fetchNewData, getChanModuleInfo } from '$lib/api.js';
-    import { RefreshCw, Download, TrendingUp, Info, Activity } from 'lucide-svelte';
+    import { loadChartData, fetchNewData, getChanModuleInfo, getDatabaseChartData } from '$lib/api.js';
+    import { RefreshCw, Download, TrendingUp, Info, Activity, Database } from 'lucide-svelte';
 
     let loading = false;
     let error = null;
     let chanModuleInfo = null;
+    let useDatabase = true; // 默认使用数据库数据
 
     onMount(() => {
         // 优先加载关键数据
@@ -32,15 +33,52 @@
             const timeframe = $settingsStore.timeframe;
             const limit = $settingsStore.dataCount;
 
-            const data = await loadChartData(timeframe, limit, true);
-
-            if (data.success) {
-                klineStore.set(data.data.chart_data.klines);
-                if (data.data.analysis) {
-                    analysisStore.set(data.data.analysis);
+            let data;
+            if (useDatabase) {
+                // 使用数据库API获取K线数据
+                data = await getDatabaseChartData('btc_usdt', timeframe, limit);
+                
+                // 转换数据格式以兼容现有组件
+                if (data.success && data.data) {
+                    // 将数据库返回的对象格式转换为图表组件期望的数组格式
+                    const convertedData = data.data.map(item => [
+                        item.timestamp,           // 时间戳 (毫秒)
+                        parseFloat(item.open_price),         // 开盘价
+                        parseFloat(item.high_price),         // 最高价
+                        parseFloat(item.low_price),          // 最低价
+                        parseFloat(item.close_price),        // 收盘价
+                        parseFloat(item.volume)              // 成交量
+                    ]);
+                    
+                    // 按时间升序排序（TradingView要求数据必须按时间升序）
+                    convertedData.sort((a, b) => a[0] - b[0]);
+                    
+                    klineStore.set(convertedData);
+                    // 数据库API暂时不包含分析数据，设置默认结构避免null错误
+                    analysisStore.set({
+                        fenxings: [],
+                        bis: [],
+                        xianduan: [],
+                        buy_sell_points: [],
+                        trend: { direction: 'neutral', strength: 0 },
+                        support_resistance: { support_levels: [], resistance_levels: [] },
+                        analysis_summary: {}
+                    });
+                } else {
+                    throw new Error(data.message || 'API返回错误');
                 }
             } else {
-                throw new Error('API返回错误');
+                // 使用原有的缠论分析API
+                data = await loadChartData(timeframe, limit, true);
+
+                if (data.success) {
+                    klineStore.set(data.data.chart_data.klines);
+                    if (data.data.analysis) {
+                        analysisStore.set(data.data.analysis);
+                    }
+                } else {
+                    throw new Error('API返回错误');
+                }
             }
         } catch (err) {
             error = err.message;
@@ -125,6 +163,17 @@
 
                     <!-- 操作按钮 -->
                     <div class="flex items-center space-x-2">
+                        <!-- 数据源切换按钮 -->
+                        <button
+                            on:click={() => { useDatabase = !useDatabase; loadData(); }}
+                            disabled={loading}
+                            class="btn-secondary btn-sm {useDatabase ? 'bg-blue-100 text-blue-700 border-blue-300' : ''}"
+                            title="{useDatabase ? '当前: 数据库数据' : '当前: 缠论分析数据'}"
+                        >
+                            <Database class="w-4 h-4 mr-1" />
+                            <span class="hidden sm:inline">{useDatabase ? '数据库' : '缠论'}</span>
+                        </button>
+
                         <button
                             on:click={loadData}
                             disabled={loading}
