@@ -127,7 +127,11 @@
                 timestamp: new Date().toISOString()
             }
         });
-        document.dispatchEvent(event);
+        
+        // 只在浏览器环境中触发事件
+        if (typeof document !== 'undefined') {
+            document.dispatchEvent(event);
+        }
     }
 </script>
 

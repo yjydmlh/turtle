@@ -220,7 +220,11 @@
                 const event = new CustomEvent('quickAction', {
                     detail: { action: 'buy', price }
                 });
-                document.dispatchEvent(event);
+                
+                // 只在浏览器环境中触发事件
+                if (typeof document !== 'undefined') {
+                    document.dispatchEvent(event);
+                }
             }}
         >
             关注买点
@@ -233,7 +237,11 @@
                 const event = new CustomEvent('quickAction', {
                     detail: { action: 'sell', price }
                 });
-                document.dispatchEvent(event);
+                
+                // 只在浏览器环境中触发事件
+                if (typeof document !== 'undefined') {
+                    document.dispatchEvent(event);
+                }
             }}
         >
             关注卖点

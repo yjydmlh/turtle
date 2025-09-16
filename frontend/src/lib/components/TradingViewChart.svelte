@@ -541,10 +541,12 @@
                 const canvas = exportChart();
                 if (canvas) {
                     // 触发下载
-                    const link = document.createElement('a');
-                    link.download = `chart-${new Date().getTime()}.png`;
-                    link.href = canvas.toDataURL();
-                    link.click();
+                    if (typeof document !== 'undefined') {
+                        const link = document.createElement('a');
+                        link.download = `chart-${new Date().getTime()}.png`;
+                        link.href = canvas.toDataURL();
+                        link.click();
+                    }
                 }
             }}
             class="bg-white bg-opacity-90 hover:bg-opacity-100 text-gray-700 text-xs px-2 py-1 rounded shadow-sm border border-gray-200 transition-all"

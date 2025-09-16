@@ -5,6 +5,8 @@
     import MarketStatus from '$lib/components/MarketStatus.svelte';
     import FenxingList from '$lib/components/FenxingList.svelte';
     import TradingSuggestion from '$lib/components/TradingSuggestion.svelte';
+    import FloatingToolbar from '$lib/components/FloatingToolbar.svelte';
+    import DraggablePanel from '$lib/components/DraggablePanel.svelte';
     import { klineStore, analysisStore, settingsStore, loadingStore, errorStore } from '$lib/stores.js';
     import { loadChartData, fetchNewData, getChanModuleInfo, getDatabaseChartData } from '$lib/api.js';
     import { RefreshCw, Download, TrendingUp, Info, Activity, Database } from 'lucide-svelte';
@@ -13,6 +15,16 @@
     let error = null;
     let chanModuleInfo = null;
     let useDatabase = true; // 默认使用数据库数据
+    let selectedSymbol = 'btc_usdt';
+    let selectedTimeframe = '1h';
+    
+    // 面板显示状态
+    let panels = {
+        control: false,
+        market: false,
+        fenxing: false,
+        trading: false
+    };
 
     onMount(() => {
         // 优先加载关键数据
@@ -118,6 +130,11 @@
     function handleTimeframeChange(event) {
         loadData();
     }
+
+    function handlePanelToggle(event) {
+        const { panel } = event.detail;
+        panels[panel] = !panels[panel];
+    }
 </script>
 
 <!-- 页面头部 -->
@@ -126,7 +143,7 @@
     <meta name="description" content="基于缠中说禅理论的专业技术分析系统，支持实时K线分析、分型识别、笔段构建" />
 </svelte:head>
 
-<div class="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
+<div class="min-h-screen bg-gray-900 flex flex-col">
     <!-- 头部导航 -->
     <header class="bg-white shadow-sm border-b border-gray-200">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -199,107 +216,99 @@
         </div>
     </header>
 
-    <!-- 控制面板 -->
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-        <ControlPanel on:change={handleTimeframeChange} />
-    </div>
-
-    <!-- 错误提示 -->
-    {#if error}
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="bg-bear-50 border-l-4 border-bear-400 p-4 mb-4 rounded-r-lg">
-                <div class="flex items-start">
+    <!-- 主要内容区域 - 全屏K线图表 -->
+    <main class="flex-1 relative overflow-hidden">
+        <!-- 错误提示 -->
+        {#if $errorStore}
+            <div class="absolute top-4 left-1/2 transform -translate-x-1/2 z-50 bg-red-50 border border-red-200 rounded-lg p-4 shadow-lg max-w-md">
+                <div class="flex">
                     <div class="flex-shrink-0">
-                        <Info class="h-5 w-5 text-bear-400" />
+                        <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                        </svg>
                     </div>
                     <div class="ml-3">
-                        <h3 class="text-sm font-medium text-bear-800">
-                            数据加载失败
-                        </h3>
-                        <div class="mt-2 text-sm text-bear-700">
-                            {error}
-                        </div>
-                        <div class="mt-3">
-                            <button
-                                on:click={loadData}
-                                class="btn-sm bg-bear-100 text-bear-800 border-bear-200 hover:bg-bear-200"
-                            >
-                                重试
-                            </button>
+                        <h3 class="text-sm font-medium text-red-800">错误</h3>
+                        <div class="mt-2 text-sm text-red-700">
+                            <p>{$errorStore}</p>
                         </div>
                     </div>
                 </div>
             </div>
+        {/if}
+
+        <!-- 全屏K线图表 -->
+        <div class="absolute inset-0 bg-white">
+            <TradingViewChart />
         </div>
-    {/if}
 
-    <!-- 主要内容区域 -->
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8">
-        <div class="grid grid-cols-1 xl:grid-cols-4 gap-6">
-            <!-- 图表区域 -->
-            <div class="xl:col-span-3">
-                <div class="card">
-                    <div class="card-header">
-                        <div class="flex justify-between items-center">
-                            <div>
-                                <h3 class="text-lg font-semibold text-gray-900">BTC/USDT 专业图表</h3>
-                                <p class="text-sm text-gray-500 mt-1">集成缠论分析 · TradingView专业图表</p>
-                            </div>
-                            <div class="flex items-center space-x-2 text-sm text-gray-500">
-                                <span>时间周期:</span>
-                                <span class="badge-primary">{$settingsStore.timeframe}</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="p-0">
-                        <TradingViewChart />
-                    </div>
-                </div>
+        <!-- 浮动工具栏 -->
+        <FloatingToolbar on:panelToggle={handlePanelToggle} />
+
+        <!-- 弹出式面板 -->
+        <DraggablePanel
+            bind:isVisible={panels.control}
+            title="控制面板"
+            initialX={100}
+            initialY={100}
+            width={400}
+            height={300}
+            on:close={() => panels.control = false}
+        >
+            <div class="p-4">
+                <ControlPanel 
+                    bind:selectedSymbol 
+                    bind:selectedTimeframe 
+                    bind:useDatabase 
+                    on:loadData={loadData}
+                    on:fetchNewData={handleFetchNewData}
+                    on:timeframeChange={handleTimeframeChange}
+                />
             </div>
+        </DraggablePanel>
 
-            <!-- 侧边栏 -->
-            <div class="xl:col-span-1 space-y-6">
-                <!-- 市场状态 -->
-                <div class="card">
-                    <div class="card-header bg-gradient-to-r from-bull-50 to-chan-50">
-                        <h3 class="text-md font-semibold text-gray-900 flex items-center">
-                            <Activity class="w-5 h-5 mr-2 text-bull-600" />
-                            市场状态
-                        </h3>
-                    </div>
-                    <div class="card-body">
-                        <MarketStatus />
-                    </div>
-                </div>
-
-                <!-- 分型列表 -->
-                <div class="card">
-                    <div class="card-header bg-gradient-to-r from-purple-50 to-pink-50">
-                        <h3 class="text-md font-semibold text-gray-900 flex items-center">
-                            <TrendingUp class="w-5 h-5 mr-2 text-purple-600" />
-                            分型识别
-                        </h3>
-                    </div>
-                    <div class="p-0">
-                        <FenxingList />
-                    </div>
-                </div>
-
-                <!-- 交易建议 -->
-                <div class="card">
-                    <div class="card-header bg-gradient-to-r from-yellow-50 to-orange-50">
-                        <h3 class="text-md font-semibold text-gray-900 flex items-center">
-                            <Info class="w-5 h-5 mr-2 text-yellow-600" />
-                            交易建议
-                        </h3>
-                    </div>
-                    <div class="card-body">
-                        <TradingSuggestion />
-                    </div>
-                </div>
+        <DraggablePanel
+            bind:isVisible={panels.market}
+            title="市场状态"
+            initialX={150}
+            initialY={150}
+            width={350}
+            height={400}
+            on:close={() => panels.market = false}
+        >
+            <div class="p-4">
+                <MarketStatus />
             </div>
-        </div>
-    </div>
+        </DraggablePanel>
+
+        <DraggablePanel
+            bind:isVisible={panels.fenxing}
+            title="分型列表"
+            initialX={200}
+            initialY={200}
+            width={450}
+            height={500}
+            on:close={() => panels.fenxing = false}
+        >
+            <div class="p-4">
+                <FenxingList />
+            </div>
+        </DraggablePanel>
+
+        <DraggablePanel
+            bind:isVisible={panels.trading}
+            title="交易建议"
+            initialX={250}
+            initialY={250}
+            width={400}
+            height={450}
+            on:close={() => panels.trading = false}
+        >
+            <div class="p-4">
+                <TradingSuggestion />
+            </div>
+        </DraggablePanel>
+    </main>
 
     <!-- 底部信息栏 -->
     <footer class="bg-white border-t border-gray-200 mt-12">
@@ -356,6 +365,35 @@
         }
     }
 
+    /* 全屏布局样式 */
+    main {
+        background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+    }
+
+    /* 头部导航优化 */
+    header {
+        backdrop-filter: blur(10px);
+        background: rgba(255, 255, 255, 0.95);
+        border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    }
+
+    /* 错误提示样式优化 */
+    .error-notification {
+        backdrop-filter: blur(10px);
+        animation: slideInFromTop 0.3s ease-out;
+    }
+
+    @keyframes slideInFromTop {
+        from {
+            opacity: 0;
+            transform: translate(-50%, -20px);
+        }
+        to {
+            opacity: 1;
+            transform: translate(-50%, 0);
+        }
+    }
+
     /* 响应式调整 */
     @media (max-width: 1280px) {
         .xl\:col-span-3 {
@@ -367,18 +405,65 @@
         }
     }
 
-    /* 卡片悬停效果 */
-    .card {
-        transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-    }
+    @media (max-width: 768px) {
+        header {
+            padding: 0.75rem 1rem;
+        }
 
-    .card:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+        .logo-section h1 {
+            font-size: 1.25rem;
+        }
+
+        .nav-actions {
+            gap: 0.5rem;
+        }
+
+        .nav-actions button {
+            padding: 0.5rem;
+            font-size: 0.875rem;
+        }
     }
 
     /* 加载状态 */
     .loading-overlay {
         backdrop-filter: blur(2px);
+    }
+
+    /* 深色主题适配 */
+    @media (prefers-color-scheme: dark) {
+        header {
+            background: rgba(30, 41, 59, 0.95);
+            border-bottom-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .error-notification {
+            background: rgba(239, 68, 68, 0.1);
+            border-color: rgba(239, 68, 68, 0.3);
+            color: #fca5a5;
+        }
+    }
+
+    /* 高对比度模式 */
+    @media (prefers-contrast: high) {
+        header {
+            background: white;
+            border-bottom: 2px solid #000;
+        }
+
+        main {
+            background: #000;
+        }
+    }
+
+    /* 减少动画模式 */
+    @media (prefers-reduced-motion: reduce) {
+        .page-transition,
+        .error-notification {
+            animation: none;
+        }
+
+        * {
+            transition: none !important;
+        }
     }
 </style>
