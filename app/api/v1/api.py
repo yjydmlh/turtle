@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from app.api.v1.endpoints import kline, kline_simple, chan_analysis, kline_database
+from app.api.v1.endpoints import kline, kline_simple, chan_analysis, kline_database, chan_strategy
 
 api_router = APIRouter()
 
@@ -14,3 +14,6 @@ api_router.include_router(kline_database.router, prefix="/database", tags=["klin
 
 # 新增的缠论分析API - 集成Chan模块
 api_router.include_router(chan_analysis.router, prefix="/chan", tags=["chan-analysis"])
+
+# 新增的缠论策略API - 多级别联立分析交易策略
+api_router.include_router(chan_strategy.router, prefix="/strategy", tags=["chan-strategy"])

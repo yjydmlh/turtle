@@ -7,6 +7,7 @@ from urllib3 import poolmanager
 import pandas as pd
 from datetime import datetime, timedelta
 import time
+import ssl
 from decimal import Decimal
 from sqlalchemy.orm import Session
 from app.db.session import SessionLocal

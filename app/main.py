@@ -72,6 +72,8 @@ async def root():
                 "Chan模块集成 (分型、笔、线段分析)",
                 "实时数据获取 (币安API)",
                 "专业缠论分析 (买卖点识别)",
+                "多级别联立策略 (交易信号生成)",
+                "策略回测分析 (历史表现评估)",
                 "Svelte前端界面"
             ],
             "api_docs": f"/api/v1/docs",
@@ -79,7 +81,15 @@ async def root():
             "getting_started": {
                 "1": "访问 /api/v1/docs 查看API文档",
                 "2": "POST /api/v1/simple/fetch-data 获取数据",
-                "3": "GET /api/v1/chan/analyze 进行缠论分析"
+                "3": "GET /api/v1/chan/analyze 进行缠论分析",
+                "4": "GET /api/v1/strategy/analyze 获取交易策略信号",
+                "5": "GET /api/v1/strategy/backtest 进行策略回测"
+            },
+            "strategy_features": {
+                "signal_types": ["第一类买卖点", "第二类买卖点", "第三类买卖点"],
+                "analysis_levels": ["分型识别", "笔构建", "趋势分析", "支撑阻力"],
+                "risk_management": ["智能仓位", "止损止盈", "风险评级"],
+                "backtest_metrics": ["收益率", "胜率", "最大回撤", "夏普比率"]
             }
         }
 
