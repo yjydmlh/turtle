@@ -19,6 +19,20 @@
     let isLoading = true;
     let error = null;
 
+    // 计算自适应高度
+    function calculateResponsiveHeight() {
+        if (typeof window !== 'undefined') {
+            // 获取窗口高度，减去头部导航和底部信息的高度
+            const windowHeight = window.innerHeight;
+            const headerHeight = 80; // 头部导航高度
+            const footerHeight = 80; // 底部信息高度（减少了）
+            const padding = 20; // 减少额外边距
+            
+            return Math.max(400, windowHeight - headerHeight - footerHeight - padding);
+        }
+        return 600;
+    }
+
     // 图表配置
     let chartOptions = {
         width: 0,
@@ -94,6 +108,9 @@
     };
 
     onMount(async () => {
+        // 设置初始自适应高度
+        containerHeight = calculateResponsiveHeight();
+        
         // 延迟初始化图表以提升页面加载速度
         await new Promise(resolve => setTimeout(resolve, 100));
         
@@ -105,10 +122,24 @@
         const unsubscribeAnalysis = analysisStore.subscribe(updateAnalysisOverlay);
         const unsubscribeSettings = chartSettingsStore.subscribe(updateChartSettings);
 
+        // 监听窗口大小变化
+        const handleWindowResize = () => {
+            const newHeight = calculateResponsiveHeight();
+            if (newHeight !== containerHeight) {
+                containerHeight = newHeight;
+                if (chart) {
+                    chart.applyOptions({ height: containerHeight });
+                }
+            }
+        };
+
+        window.addEventListener('resize', handleWindowResize);
+
         return () => {
             unsubscribeKline();
             unsubscribeAnalysis();
             unsubscribeSettings();
+            window.removeEventListener('resize', handleWindowResize);
         };
     });
 
