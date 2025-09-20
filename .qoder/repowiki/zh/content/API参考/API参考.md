@@ -1,3 +1,4 @@
+<docs>
 # API参考
 
 <cite>
@@ -10,7 +11,16 @@
 - [config.py](file://app/core/config.py)
 - [exceptions.py](file://app/core/exceptions.py)
 - [kline_aggregator.py](file://app/services/kline_aggregator.py)
+- [chan_strategy.py](file://app/api/v1/endpoints/chan_strategy.py) - *新增于最近提交*
+- [chan_strategy.py](file://app/services/chan_strategy.py) - *新增于最近提交*
 </cite>
+
+## 更新摘要
+**已更新内容**
+- 新增了 `/strategy/analyze`、`/strategy/signals/history` 和 `/strategy/backtest` 三个缠论策略分析API端点的详细文档
+- 更新了文档来源列表，包含新引入的 `chan_strategy.py` 文件
+- 在目录中添加了新的“缠论策略分析”章节
+- 所有内容已根据最新代码实现进行验证和同步
 
 ## 目录
 1. [API版本控制](#api版本控制)
@@ -22,7 +32,10 @@
 7. [/simple/latest - 获取最新K线数据](#simplelatest---获取最新k线数据)
 8. [/simple/stats - 获取数据库统计信息](#simplestats---获取数据库统计信息)
 9. [/simple/health - 健康检查](#simplehealth---健康检查)
-10. [错误响应格式](#错误响应格式)
+10. [/strategy/analyze - 缠论策略分析](#strategyanalyze---缠论策略分析)
+11. [/strategy/signals/history - 获取策略信号历史](#strategysignalshistory---获取策略信号历史)
+12. [/strategy/backtest - 策略回测分析](#strategybacktest---策略回测分析)
+13. [错误响应格式](#错误响应格式)
 
 ## API版本控制
 本系统采用基于URL路径的API版本控制策略，所有公共API端点均位于`/api/v1/`前缀下。该策略通过在`app/main.py`中配置FastAPI应用的`openapi_url`、`docs_url`和`redoc_url`参数实现，确保API文档、交互式文档界面与实际端点保持一致。此设计允许未来在不影响现有客户端的情况下引入`/api/v2/`等新版本。
@@ -491,30 +504,286 @@ curl -X GET "http://localhost:8000/api/v1/simple/health"
 **Section sources**
 - [kline_simple.py](file://app/api/v1/endpoints/kline_simple.py#L237-L259)
 
-## 错误响应格式
-所有API端点遵循统一的错误响应格式，便于客户端解析。
+## /strategy/analyze - 缠论策略分析
+执行基于缠论的多级别联立分析，生成专业的交易信号和投资建议。
 
-### 通用错误响应结构
+### 端点信息
+- **HTTP方法**: `GET`
+- **完整URL路径**: `/api/v1/strategy/analyze`
+
+### 请求参数
+| 参数名 | 位置 | 类型 | 是否必需 | 约束 | 描述 |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| `timeframe` | 查询参数 | string | 否 | 枚举: `1m`, `5m`, `15m`, `30m`, `1h`, `4h`, `1d` | 分析的时间周期，默认为`1h`。 |
+| `limit` | 查询参数 | integer | 否 | 范围: `50` - `500` | 分析的K线数量，默认为`200`。建议200根以上以获得更准确的分析。 |
+| `symbol` | 查询参数 | string | 否 | 默认值: `btc_usdt` | 交易品种代码，支持`btc_usdt`等。 |
+
+### 请求示例
+```bash
+curl -X GET "http://localhost:8000/api/v1/strategy/analyze?timeframe=1h&limit=200&symbol=btc_usdt"
+```
+
+### 成功响应 (HTTP 200)
 ```json
 {
-  "success": false,
-  "code": <错误代码>,
-  "message": "<错误信息>",
-  "data": null
+  "success": true,
+  "code": 0,
+  "message": "success",
+  "data": {
+    "strategy_analysis": {
+      "signals": [
+        {
+          "signal_type": "第三类买点",
+          "timestamp": 1703123456000,
+          "price": 42500.0,
+          "confidence": 0.75,
+          "level": "1h",
+          "description": "底分型买入信号 - 强度: 1.2",
+          "risk_level": "medium",
+          "position_size": 0.15,
+          "stop_loss": 41175.0,
+          "take_profit": 45050.0
+        }
+      ],
+      "analysis": {
+        "fenxings": [
+          {
+            "type": "bottom",
+            "timestamp": 1703123456000,
+            "price": 42500.0,
+            "index": 15,
+            "strength": 1.2
+          }
+        ],
+        "bis": [
+          {
+            "start": { "timestamp": 1703123456000, "price": 42500.0 },
+            "end": { "timestamp": 1703127056000, "price": 43500.0 },
+            "direction": "up",
+            "length": 1000.0,
+            "time_span": 3600000,
+            "bars_count": 6
+          }
+        ],
+        "trend_analysis": {
+          "direction": "up",
+          "strength": 0.65,
+          "price_change": 0.023
+        }
+      },
+      "recommendation": {
+        "action": "BUY",
+        "reason": "底分型买入信号 - 强度: 1.2",
+        "confidence": 0.75,
+        "position_size": 0.15,
+        "price": 42500.0,
+        "stop_loss": 41175.0,
+        "take_profit": 45050.0,
+        "risk_level": "medium"
+      },
+      "metadata": {
+        "timeframe": "1h",
+        "data_count": 200,
+        "analysis_time": "2023-12-20T10:00:00",
+        "chan_module_available": true
+      }
+    },
+    "trading_signals": {
+      "total_signals": 1,
+      "buy_signals": 1,
+      "sell_signals": 0,
+      "signals": [
+        {
+          "signal_type": "第三类买点",
+          "timestamp": 1703123456000,
+          "price": 42500.0,
+          "confidence": 0.75,
+          "level": "1h",
+          "description": "底分型买入信号 - 强度: 1.2",
+          "risk_level": "medium",
+          "position_size": 0.15,
+          "stop_loss": 41175.0,
+          "take_profit": 45050.0
+        }
+      ]
+    },
+    "market_analysis": {
+      "fenxings_identified": 8,
+      "bis_constructed": 5,
+      "trend_analysis": {
+        "direction": "up",
+        "strength": 0.65,
+        "price_change": 0.023,
+        "bi_analysis": {
+          "up_ratio": 0.7,
+          "recent_bis_count": 3
+        }
+      },
+      "support_resistance": {
+        "support_levels": [41000.0, 40000.0],
+        "resistance_levels": [44000.0, 45000.0]
+      },
+      "market_structure": {
+        "trend_direction": "up",
+        "trend_strength": 0.65,
+        "current_phase": "上升阶段"
+      }
+    },
+    "recommendation": {
+      "action": "BUY",
+      "reason": "底分型买入信号 - 强度: 1.2",
+      "confidence": 0.75,
+      "position_size": 0.15
+    },
+    "metadata": {
+      "symbol": "btc_usdt",
+      "timeframe": "1h",
+      "klines_analyzed": 200,
+      "latest_price": 42500.0,
+      "analysis_timestamp": 1703127056000,
+      "strategy_info": {
+        "name": "缠论多级别联立分析策略",
+        "version": "1.0.0",
+        "description": "基于缠中说禅理论的多级别技术分析策略",
+        "features": ["分型识别", "笔段构建", "趋势分析", "买卖点识别", "风险评估"]
+      },
+      "performance_metrics": {
+        "analysis_coverage": 85.0,
+        "signal_quality": 75.0,
+        "data_completeness": 100.0
+      }
+    },
+    "usage_guide": {
+      "signal_interpretation": {
+        "第一类买卖点": "趋势转折点，风险相对较高，但收益潜力大",
+        "第二类买卖点": "趋势确认点，风险适中，胜率较高",
+        "第三类买卖点": "趋势延续点，风险较低，适合跟趋势"
+      },
+      "risk_management": {
+        "position_size": "建议仓位已根据信号强度计算",
+        "stop_loss": "严格执行止损，控制单次损失",
+        "take_profit": "合理设置止盈，保护利润"
+      },
+      "strategy_tips": [
+        "多级别分析：结合更高级别确认趋势方向",
+        "等待确认：分型形成后等待笔的确认",
+        "资金管理：单次风险不超过总资金的2%",
+        "心理控制：严格按信号执行，避免情绪化交易"
+      ]
+    }
+  }
 }
 ```
 
-### 错误代码与信息
-| 错误代码 | HTTP状态码 | 错误信息 | 说明 |
-| :--- | :--- | :--- | :--- |
-| `0` | `200` | `success` | 成功响应，非错误。 |
-| `2001` | `400` | `不支持的交易品种: {symbol}` | 请求了不支持的交易对。 |
-| `2002` | `404` | `K线数据不存在` | 根据ID或时间戳查询的数据不存在。 |
-| `3000` | `422` | `数据验证失败` | Pydantic模型验证失败。 |
-| `1001` | `500` | `数据库操作失败` | SQLAlchemy数据库操作异常。 |
-| `1000` | `500` | `服务器内部错误` | 未捕获的通用异常。 |
+### 错误响应
+| HTTP状态码 | 错误信息 | 触发条件 |
+| :--- | :--- | :--- |
+| `404` | `没有找到K线数据，请先调用 /api/v1/simple/fetch-data 获取数据` | 数据库中不存在指定时间周期的K线数据。 |
+| `500` | `策略分析服务暂时不可用` | 服务器内部处理失败，例如策略分析错误。 |
+
+### Python客户端代码片段
+```python
+import requests
+
+url = "http://localhost:8000/api/v1/strategy/analyze"
+params = {
+    "timeframe": "1h",
+    "limit": 200,
+    "symbol": "btc_usdt"
+}
+
+response = requests.get(url, params=params)
+if response.status_code == 200:
+    result = response.json()
+    signals = result["data"]["trading_signals"]["signals"]
+    recommendation = result["data"]["recommendation"]
+    print(f"策略分析完成，生成 {len(signals)} 个交易信号")
+    print(f"推荐操作: {recommendation['action']}，置信度: {recommendation['confidence']:.2f}")
+else:
+    print(f"请求失败: {response.json()['message']}")
+```
 
 **Section sources**
-- [exceptions.py](file://app/core/exceptions.py#L67-L103)
-- [exceptions.py](file://app/core/exceptions.py#L34-L69)
-- [exceptions.py](file://app/core/exceptions.py#L0-L37)
+- [chan_strategy.py](file://app/api/v1/endpoints/chan_strategy.py#L62-L105)
+- [chan_strategy.py](file://app/services/chan_strategy.py#L621-L661)
+
+## /strategy/signals/history - 获取策略信号历史
+获取缠论策略的历史交易信号，用于回测分析和策略优化。
+
+### 端点信息
+- **HTTP方法**: `GET`
+- **完整URL路径**: `/api/v1/strategy/signals/history`
+
+### 请求参数
+| 参数名 | 位置 | 类型 | 是否必需 | 约束 | 描述 |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| `timeframe` | 查询参数 | string | 否 | 枚举: `1m`, `5m`, `15m`, `30m`, `1h`, `4h`, `1d` | 分析的时间周期，默认为`1h`。 |
+| `days` | 查询参数 | integer | 否 | 范围: `1` - `30` | 查询的历史天数，默认为`7`。 |
+| `signal_type` | 查询参数 | string | 否 | 可选值: `买`, `卖`, `第一类买点`, `第二类卖点`等 | 信号类型过滤器，用于筛选特定类型的信号。 |
+
+### 请求示例
+```bash
+curl -X GET "http://localhost:8000/api/v1/strategy/signals/history?timeframe=1h&days=14&signal_type=买"
+```
+
+### 成功响应 (HTTP 200)
+```json
+{
+  "success": true,
+  "code": 0,
+  "message": "success",
+  "data": {
+    "signals": [
+      {
+        "signal_type": "第三类买点",
+        "timestamp": 1703123456000,
+        "price": 42500.0,
+        "confidence": 0.75,
+        "level": "1h",
+        "description": "底分型买入信号 - 强度: 1.2",
+        "risk_level": "medium",
+        "position_size": 0.15,
+        "stop_loss": 41175.0,
+        "take_profit": 45050.0,
+        "batch_index": 100
+      }
+    ],
+    "statistics": {
+      "total_signals": 15,
+      "buy_signals": 10,
+      "sell_signals": 5,
+      "average_confidence": 0.68,
+      "signal_frequency": 2.14
+    },
+    "performance": {
+      "win_rate": 66.7,
+      "average_return": 1.2,
+      "total_signals": 15,
+      "profitable_signals": 10
+    },
+    "metadata": {
+      "timeframe": "1h",
+      "days_analyzed": 14,
+      "klines_processed": 336,
+      "analysis_batches": 15
+    }
+  }
+}
+```
+
+### 错误响应
+| HTTP状态码 | 错误信息 | 触发条件 |
+| :--- | :--- | :--- |
+| `500` | `获取历史信号失败` | 服务器内部错误。 |
+
+**Section sources**
+- [chan_strategy.py](file://app/api/v1/endpoints/chan_strategy.py#L107-L180)
+
+## /strategy/backtest - 策略回测分析
+对缠论策略进行历史回测，模拟交易表现并评估策略效果。
+
+### 端点信息
+- **HTTP方法**: `GET`
+- **完整URL路径**: `/api/v1/strategy/backtest`
+
+###

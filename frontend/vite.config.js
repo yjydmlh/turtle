@@ -54,7 +54,7 @@ export default defineConfig({
         // 优化代码分割策略
         manualChunks(id) {
           // 将大型依赖单独打包
-          if (id.includes('lightweight-charts')) {
+          if (id.includes('klinecharts')) {
             return 'charts';
           }
           if (id.includes('lucide-svelte')) {
@@ -73,7 +73,7 @@ export default defineConfig({
   },
 
   optimizeDeps: {
-    include: ['lightweight-charts', 'lucide-svelte', 'clsx', 'tailwind-merge'],
+    include: ['klinecharts', '@klinecharts/pro', 'lucide-svelte', 'clsx', 'tailwind-merge'],
     // 强制预构建依赖以提升性能
     force: true,
     // 预构建排除项

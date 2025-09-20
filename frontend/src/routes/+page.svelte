@@ -1,6 +1,6 @@
 <script>
     import { onMount } from 'svelte';
-    import TradingViewChart from '$lib/components/TradingViewChart.svelte';
+    import KLineChart from '$lib/components/KLineChart.svelte';
     import ControlPanel from '$lib/components/ControlPanel.svelte';
     import MarketStatus from '$lib/components/MarketStatus.svelte';
     import FenxingList from '$lib/components/FenxingList.svelte';
@@ -239,7 +239,7 @@
 
         <!-- 全屏K线图表 -->
         <div class="absolute inset-0 bg-white">
-            <TradingViewChart />
+            <KLineChart />
         </div>
 
         <!-- 浮动工具栏 -->
