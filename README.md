@@ -12,7 +12,7 @@
 
 ### 🎨 现代化界面
 - **响应式设计**：完美适配桌面和移动设备
-- **TradingView图表**：专业级图表显示，支持缩放和交互
+- **KLineCharts图表**：专业级金融图表显示，支持缩放和交互
 - **实时更新**：数据变化时自动刷新界面
 - **直观操作**：简洁的控制面板和友好的用户体验
 
@@ -20,7 +20,7 @@
 - **后端**：Python + FastAPI，高性能异步API服务
 - **前端**：Svelte + TailwindCSS，现代化Web界面
 - **数据库**：PostgreSQL + TimescaleDB，时序数据优化
-- **图表**：Lightweight Charts，轻量级专业图表库
+- **图表**：KLineCharts Pro，专业金融图表库
 
 ## 📋 系统要求
 
@@ -197,7 +197,7 @@ curl "http://localhost:8000/health"
 
 ### 🎨 前端组件说明
 
-#### TradingViewChart.svelte
+#### KLineChart.svelte
 - 专业K线图表显示
 - 缠论分析结果叠加
 - 支持缩放、平移、标记点击
@@ -459,7 +459,7 @@ git push origin feature/new-feature
 
 ### 社区资源
 - **缠论学习**：缠中说禅官方资料
-- **技术分析**：TradingView社区
+- **技术分析**：金融分析社区
 - **开发技术**：FastAPI、Svelte官方文档
 
 ## 🎉 致谢
@@ -467,7 +467,7 @@ git push origin feature/new-feature
 感谢以下项目和技术的支持：
 - [FastAPI](https://fastapi.tiangolo.com/) - 现代高性能Web框架
 - [Svelte](https://svelte.dev/) - 创新的前端框架
-- [Lightweight Charts](https://tradingview.github.io/lightweight-charts/) - 专业图表库
+- [KLineCharts](https://klinecharts.com/) - 专业金融图表库
 - [TailwindCSS](https://tailwindcss.com/) - 实用优先的CSS框架
 - [PostgreSQL](https://www.postgresql.org/) - 强大的关系型数据库
 - [币安API](https://binance-docs.github.io/apidocs/) - 可靠的市场数据来源

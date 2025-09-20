@@ -1,7 +1,7 @@
 {
   "name": "chan-analysis-frontend",
   "version": "1.0.0",
-  "description": "缠论分析系统前端 - Svelte + TradingView专业界面",
+  "description": "缠论分析系统前端 - Svelte + KLineCharts专业界面",
   "type": "module",
   "scripts": {
     "dev": "vite dev --port 3000",
@@ -37,7 +37,7 @@
     "缠论",
     "技术分析",
     "svelte",
-    "tradingview",
+    "klinecharts",
     "finance",
     "crypto",
     "bitcoin"

@@ -54,7 +54,7 @@ Build --> Minify["压缩工具\nminify: esbuild"]
 Build --> Sourcemap["源码映射\nsourcemap: false"]
 Build --> ChunkSize["代码块大小警告阈值\nchunkSizeWarningLimit: 1000"]
 Rollup["Rollup 选项"] --> ManualChunks["手动代码分割"]
-ManualChunks --> Charts["lightweight-charts → charts"]
+ManualChunks --> Charts["klinecharts → charts"]
 ManualChunks --> Icons["lucide-svelte → icons"]
 ManualChunks --> Vendor["node_modules → vendor"]
 Output["输出配置"] --> Naming["文件命名策略\nassets/[name]-[hash].[ext]"]
@@ -81,7 +81,7 @@ class OptimizeDeps {
 +exclude : string[]
 }
 class IncludedDeps {
-+lightweight-charts
++klinecharts
 +lucide-svelte
 +clsx
 +tailwind-merge
