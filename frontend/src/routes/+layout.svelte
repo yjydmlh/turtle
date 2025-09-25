@@ -23,20 +23,33 @@
 
     onMount(() => {
         console.log('🐢 缠论分析系统前端启动');
-        console.log('📍 当前页面:', $page.url.pathname);
+        
+        // SSR安全的页面信息记录
+        if (typeof window !== 'undefined' && $page?.url?.pathname) {
+            console.log('📍 当前页面:', $page.url.pathname);
+        }
 
         // 检查浏览器兼容性
         checkBrowserCompatibility();
 
-        // 设置全局错误处理
-        window.addEventListener('unhandledrejection', handleUnhandledRejection);
+        // 设置全局错误处理 - 仅在客户端
+        if (typeof window !== 'undefined') {
+            window.addEventListener('unhandledrejection', handleUnhandledRejection);
+        }
 
         return () => {
-            window.removeEventListener('unhandledrejection', handleUnhandledRejection);
+            if (typeof window !== 'undefined') {
+                window.removeEventListener('unhandledrejection', handleUnhandledRejection);
+            }
         };
     });
 
     function checkBrowserCompatibility() {
+        // SSR安全检查
+        if (typeof window === 'undefined') {
+            return;
+        }
+
         const requiredFeatures = [
             'fetch',
             'Promise',

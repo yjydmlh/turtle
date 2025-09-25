@@ -34,4 +34,5 @@ SYMBOL_TO_MODEL = {
     "btc_usdt": BtcUsdtKline,
     "eth_usdt": EthUsdtKline,
     # 可以继续添加其他交易品种
-} 
+    "btc_usd": BtcUsdtKline
+}

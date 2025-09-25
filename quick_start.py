@@ -88,7 +88,7 @@ class QuickStartManager:
         print("1. 安装PostgreSQL")
         print("2. 创建数据库: CREATE DATABASE turtle;")
         print("3. 在.env文件中设置: DATABASE_URL=postgresql://user:password@localhost:5432/turtle")
-        print("4. 或使用SQLite(简单测试): DATABASE_URL=sqlite:///./turtle.db")
+        print("4. 配置PostgreSQL数据库连接: DATABASE_URL=postgresql://user:password@host:port/database")
 
     def check_chan_module(self):
         """检查Chan模块"""

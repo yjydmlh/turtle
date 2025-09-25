@@ -361,7 +361,7 @@ def run_integration_test():
 
         if "数据库连接" in critical_failures:
             print("   数据库: 检查PostgreSQL服务和DATABASE_URL配置")
-            print("          或使用SQLite: DATABASE_URL=sqlite:///./turtle.db")
+            print("          配置PostgreSQL: DATABASE_URL=postgresql://user:password@host:port/database")
 
         if "API端点" in critical_failures:
             print("   API服务: python quick_start.py 启动服务器")

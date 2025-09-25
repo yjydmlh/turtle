@@ -15,6 +15,7 @@ router = APIRouter()
 def get_database_klines(
     timeframe: str = Query("1m", description="时间周期 (1m, 5m, 15m, 1h, 4h, 1d)"),
     limit: int = Query(1000, ge=1, le=5000, description="返回的K线数量"),
+    symbol: str = Query("btc_usd", description="交易品种"),
     start_time: Optional[str] = Query(None, description="开始时间 (ISO格式)"),
     end_time: Optional[str] = Query(None, description="结束时间 (ISO格式)"),
     db: Session = Depends(get_db)
@@ -65,7 +66,7 @@ def get_database_klines(
         # 从数据库获取K线数据
         klines_data = kline.get_kline_data(
             db=db,
-            symbol="btc_usdt",
+            symbol=symbol,
             interval_minutes=interval,
             start_time=start_dt,
             end_time=end_dt,
@@ -99,6 +100,7 @@ def get_database_klines(
 def get_latest_database_klines(
     timeframe: str = Query("1m", description="时间周期 (1m, 5m, 15m, 1h, 4h, 1d)"),
     count: int = Query(100, ge=1, le=500, description="最新数据条数"),
+    symbol: str = Query("btc_usd", description="交易品种"),
     db: Session = Depends(get_db)
 ):
     """
@@ -118,7 +120,7 @@ def get_latest_database_klines(
         # 获取最新数据
         klines_data = kline.get_kline_data(
             db=db,
-            symbol="btc_usdt",
+            symbol=symbol,
             interval_minutes=timeframe_minutes,
             limit=count
         )
@@ -146,6 +148,7 @@ def get_latest_database_klines(
 def get_database_chart_data(
     timeframe: str = Query("1m", description="时间周期 (1m, 5m, 15m, 1h, 4h, 1d)"),
     limit: int = Query(500, ge=20, le=1000, description="图表数据量"),
+    symbol: str = Query("btc_usd", description="交易品种"),
     start_time: Optional[str] = Query(None, description="开始时间 (ISO格式)"),
     end_time: Optional[str] = Query(None, description="结束时间 (ISO格式)"),
     db: Session = Depends(get_db)
@@ -183,7 +186,7 @@ def get_database_chart_data(
         # 获取K线数据
         klines_data = kline.get_kline_data(
             db=db,
-            symbol="btc_usdt",
+            symbol=symbol,
             interval_minutes=timeframe_minutes,
             limit=limit,
             start_time=start_dt,
@@ -211,7 +214,10 @@ def get_database_chart_data(
 
 
 @router.get("/statistics")
-def get_database_statistics(db: Session = Depends(get_db)):
+def get_database_statistics(
+    symbol: str = Query("btc_usd", description="交易品种"),
+    db: Session = Depends(get_db)
+):
     """
     获取数据库K线数据统计信息
     
@@ -239,16 +245,16 @@ def get_database_statistics(db: Session = Depends(get_db)):
         # 获取最新数据
         latest_klines = kline.get_multi(
             db=db,
-            symbol="btc_usdt",
+            symbol=symbol,
             skip=0,
             limit=1
         )
         
         # 获取最旧数据
-        total_count = kline.get_count(db, symbol="btc_usdt")
+        total_count = kline.get_count(db, symbol=symbol)
         oldest_klines = kline.get_multi(
             db=db,
-            symbol="btc_usdt",
+            symbol=symbol,
             skip=max(0, total_count - 1),
             limit=1
         )

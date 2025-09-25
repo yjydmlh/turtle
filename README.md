@@ -27,7 +27,7 @@
 ### 基础环境
 - **Python**: 3.8+
 - **Node.js**: 16.0+
-- **PostgreSQL**: 12.0+ (推荐) 或 SQLite (测试用)
+- **PostgreSQL**: 12.0+ (推荐)
 - **操作系统**: Windows 10+, macOS 10.15+, Ubuntu 18.04+
 
 ### 硬件建议
@@ -110,11 +110,7 @@ sudo -u postgres createdb turtle
 DATABASE_URL=postgresql://postgres:your_password@localhost:5432/turtle
 ```
 
-#### SQLite (开发测试)
-```bash
-# 在.env文件中配置
-DATABASE_URL=sqlite:///./turtle.db
-```
+
 
 ### Chan模块集成
 

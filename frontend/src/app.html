@@ -5,6 +5,16 @@
     <link rel="icon" href="%sveltekit.assets%/favicon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
 
+    <!-- 性能优化 - 资源预加载 -->
+    <link rel="preconnect" href="http://localhost:8000" crossorigin>
+    <link rel="dns-prefetch" href="http://localhost:8000">
+    
+    <!-- 预加载关键CSS -->
+    <!-- <link rel="preload" href="%sveltekit.assets%/app.css" as="style"> -->
+    
+    <!-- 预加载关键字体 -->
+    <link rel="preload" href="%sveltekit.assets%/fonts/inter-400.woff2" as="font" type="font/woff2" crossorigin>
+
     <!-- SEO Meta Tags -->
     <meta name="description" content="缠论分析系统 - 基于缠中说禅理论的专业技术分析平台，支持实时K线分析、分型识别、笔段构建" />
     <meta name="keywords" content="缠论,技术分析,K线分析,分型,笔,线段,交易分析,比特币,数字货币" />

@@ -240,6 +240,10 @@
 
             // 设置图表样式
             chart.setStyles({
+                layout: {
+                    backgroundColor: '#ffffff',
+                    textColor: '#333333'
+                },
                 grid: {
                     show: true,
                     horizontal: { show: true, size: 1, color: '#f0f0f0', style: 'solid' },
@@ -249,6 +253,16 @@
                     margin: { top: 0.2, bottom: 0.1 },
                     type: 'candle_solid',
                     bar: { upColor: '#22c55e', downColor: '#ef4444', noChangeColor: '#888888' }
+                },
+                xAxis: {
+                    axisLine: { color: '#e5e5e5' },
+                    tickText: { color: '#666666' },
+                    tickLine: { color: '#e5e5e5' }
+                },
+                yAxis: {
+                    axisLine: { color: '#e5e5e5' },
+                    tickText: { color: '#666666' },
+                    tickLine: { color: '#e5e5e5' }
                 },
                 crosshair: {
                     show: true,
@@ -266,15 +280,63 @@
             });
 
             // 创建成交量副图
-            chart.createIndicator('VOL', false, { id: 'volume_pane' });
+            chart.createIndicator('VOL', false, { 
+                id: 'volume_pane',
+                height: 100,
+                styles: {
+                    backgroundColor: '#ffffff'
+                }
+            });
 
             // 设置图表事件监听
             setupChartEventListeners();
+
+            // 自动加载K线数据
+            await loadKlineData();
 
             isLoading = false;
         } catch (err) {
             console.error('图表初始化失败:', err);
             error = '图表初始化失败: ' + err.message;
+            isLoading = false;
+        }
+    }
+
+    // 从后端API加载K线数据
+    async function loadKlineData() {
+        try {
+            isLoading = true;
+            error = null;
+            
+            const response = await fetch('/api/v1/kline_simple/klines?timeframe=1m&symbol=btc_usdt&limit=200');
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            const result = await response.json();
+            if (result.success && result.data && result.data.klines) {
+                const klineData = result.data.klines.map(item => ({
+                    timestamp: item.timestamp,
+                    open: parseFloat(item.open_price),
+                    high: parseFloat(item.high_price),
+                    low: parseFloat(item.low_price),
+                    close: parseFloat(item.close_price),
+                    volume: parseFloat(item.volume)
+                }));
+
+                // 应用数据到图表
+                if (chart && klineData.length > 0) {
+                    chart.applyNewData(klineData);
+                    // 自动缩放到合适的时间范围
+                    chart.zoomAtTimestamp(klineData[klineData.length - 1].timestamp, 0.02);
+                }
+            } else {
+                throw new Error(result.message || '获取数据失败');
+            }
+        } catch (err) {
+            error = err.message;
+            console.error('获取K线数据失败:', err);
+        } finally {
             isLoading = false;
         }
     }
@@ -287,6 +349,10 @@
         chart.subscribeAction('onCrosshairChange', (data) => {
             if (data.kLineData) {
                 updateTooltip(data.kLineData);
+                // 更新十字线时间显示
+                crosshairTime = formatCrosshairTime(data.kLineData.timestamp);
+            } else {
+                crosshairTime = '';
             }
         });
 
@@ -631,6 +697,24 @@
             console.error('移除技术指标失败:', err);
         }
     }
+
+    // 当前十字线时间显示
+    let crosshairTime = '';
+
+    // 格式化时间为 yyyy-MM-dd HH:mm:ss
+    function formatCrosshairTime(timestamp) {
+        if (!timestamp) return '';
+        const date = new Date(timestamp);
+        return date.toLocaleString('zh-CN', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: false
+        }).replace(/\//g, '-');
+    }
 </script>
 
 <!-- 图表容器 -->
@@ -672,6 +756,13 @@
 
     <!-- 图表工具栏 -->
     <div class="absolute top-2 right-2 z-20 flex space-x-1">
+        <!-- 十字线时间显示 -->
+        {#if crosshairTime}
+            <div class="bg-blue-600 text-white text-xs px-3 py-1 rounded shadow-sm border border-blue-700 font-mono">
+                {crosshairTime}
+            </div>
+        {/if}
+        
         <button
             on:click={fitContent}
             class="bg-white bg-opacity-90 hover:bg-opacity-100 text-gray-700 text-xs px-2 py-1 rounded shadow-sm border border-gray-200 transition-all"
@@ -737,7 +828,6 @@
             <span>数据源: 币安API</span>
             <span>时间周期: {$settingsStore.timeframe}</span>
             <span>数据量: {$klineStore.length} 条</span>
-            <span class="text-green-600">🚀 KLineCharts Pro</span>
         </div>
 
         <div class="flex items-center space-x-2">

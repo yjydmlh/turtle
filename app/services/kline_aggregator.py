@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import and_
 import pandas as pd
 
-from app.models.kline import BtcUsdtKline
+from app.models.kline import BtcUsdtKline, SYMBOL_TO_MODEL
 from app.core.logger import app_logger
 
 
@@ -30,6 +30,7 @@ class KlineAggregator:
             self,
             db: Session,
             timeframe: str,
+            symbol: str = "btc_usd",
             start_time: Optional[datetime] = None,
             end_time: Optional[datetime] = None,
             limit: int = 200
@@ -40,6 +41,7 @@ class KlineAggregator:
         Args:
             db: 数据库会话
             timeframe: 目标时间周期 (1m, 5m, 15m, 30m, 1h, 4h, 1d)
+            symbol: 交易品种（默认 btc_usd）
             start_time: 开始时间
             end_time: 结束时间
             limit: 返回数据条数限制
@@ -51,30 +53,38 @@ class KlineAggregator:
             if timeframe not in self.TIMEFRAMES:
                 raise ValueError(f"不支持的时间周期: {timeframe}")
 
+            # 选择模型
+            model = SYMBOL_TO_MODEL.get(symbol, BtcUsdtKline)
+
             # 如果是1分钟，直接返回原始数据
             if timeframe == '1m':
-                return self._get_raw_klines(db, start_time, end_time, limit)
+                return self._get_raw_klines(db, model, start_time, end_time, limit)
 
             # 获取聚合间隔（分钟）
             interval_minutes = self.TIMEFRAMES[timeframe]
 
             # 设置默认时间范围
             if not end_time:
-                end_time = datetime.now()
+                # 如果没有指定结束时间，使用数据库中的最新时间
+                latest_kline = db.query(model).order_by(model.open_time.desc()).first()
+                if latest_kline:
+                    end_time = latest_kline.open_time + timedelta(minutes=1)
+                else:
+                    end_time = datetime.now()
             if not start_time:
                 # 根据需要的数据量和时间周期计算开始时间
                 total_minutes = limit * interval_minutes
                 start_time = end_time - timedelta(minutes=total_minutes * 2)  # 多取一些数据确保足够
 
-            app_logger.info(f"🔄 聚合 {timeframe} K线数据，时间范围: {start_time} 到 {end_time}")
+            app_logger.info(f"🔄 聚合 {timeframe} K线数据，时间范围: {start_time} 到 {end_time}，品种: {symbol}")
 
             # 获取1分钟原始数据
-            raw_klines = db.query(BtcUsdtKline).filter(
+            raw_klines = db.query(model).filter(
                 and_(
-                    BtcUsdtKline.open_time >= start_time,
-                    BtcUsdtKline.open_time < end_time
+                    model.open_time >= start_time,
+                    model.open_time < end_time
                 )
-            ).order_by(BtcUsdtKline.open_time).all()
+            ).order_by(model.open_time).all()
 
             if not raw_klines:
                 app_logger.warning("没有找到原始K线数据")
@@ -100,20 +110,26 @@ class KlineAggregator:
     def _get_raw_klines(
             self,
             db: Session,
+            model,
             start_time: Optional[datetime],
             end_time: Optional[datetime],
             limit: int
     ) -> List[Dict]:
         """获取原始1分钟K线数据"""
-        query = db.query(BtcUsdtKline)
+        query = db.query(model)
 
         if start_time:
-            query = query.filter(BtcUsdtKline.open_time >= start_time)
+            query = query.filter(model.open_time >= start_time)
         if end_time:
-            query = query.filter(BtcUsdtKline.open_time < end_time)
+            query = query.filter(model.open_time < end_time)
 
-        klines = query.order_by(BtcUsdtKline.open_time.desc()).limit(limit).all()
-        klines.reverse()  # 按时间正序
+        # 如果没有时间范围限制，直接获取最新的数据
+        if not start_time and not end_time:
+            klines = query.order_by(model.open_time.desc()).limit(limit).all()
+            klines.reverse()  # 按时间正序
+        else:
+            klines = query.order_by(model.open_time.desc()).limit(limit).all()
+            klines.reverse()  # 按时间正序
 
         return [self._kline_to_dict(kline) for kline in klines]
 
@@ -205,17 +221,19 @@ class KlineAggregator:
         """获取支持的时间周期列表"""
         return list(self.TIMEFRAMES.keys())
 
-    def get_latest_timestamp(self, db: Session) -> Optional[int]:
+    def get_latest_timestamp(self, db: Session, symbol: str = "btc_usd") -> Optional[int]:
         """获取最新的K线时间戳"""
-        latest = db.query(BtcUsdtKline.timestamp).order_by(
-            BtcUsdtKline.timestamp.desc()
+        model = SYMBOL_TO_MODEL.get(symbol, BtcUsdtKline)
+        latest = db.query(model.timestamp).order_by(
+            model.timestamp.desc()
         ).first()
         return latest[0] if latest else None
 
-    def get_data_statistics(self, db: Session) -> Dict:
+    def get_data_statistics(self, db: Session, symbol: str = "btc_usd") -> Dict:
         """获取数据统计信息"""
         try:
-            total_count = db.query(BtcUsdtKline).count()
+            model = SYMBOL_TO_MODEL.get(symbol, BtcUsdtKline)
+            total_count = db.query(model).count()
 
             if total_count == 0:
                 return {
@@ -224,12 +242,12 @@ class KlineAggregator:
                     "latest_price": None
                 }
 
-            earliest = db.query(BtcUsdtKline.open_time).order_by(
-                BtcUsdtKline.open_time.asc()
+            earliest = db.query(model.open_time).order_by(
+                model.open_time.asc()
             ).first()
 
-            latest = db.query(BtcUsdtKline).order_by(
-                BtcUsdtKline.open_time.desc()
+            latest = db.query(model).order_by(
+                model.open_time.desc()
             ).first()
 
             return {

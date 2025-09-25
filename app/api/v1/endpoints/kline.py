@@ -1,7 +1,7 @@
 from typing import List, Optional
 from fastapi import APIRouter, Depends, Query, HTTPException
 from sqlalchemy.orm import Session
-from datetime import datetime, timedelta
+from datetime import datetime
 from app import crud
 from app.api import deps
 from app.schemas.kline import BtcUsdtKline
@@ -10,7 +10,6 @@ from app.core.logger import app_logger
 from app.core.exceptions import (
     InvalidParameterException,
     ResourceNotFoundException,
-    DatabaseException,
     create_success_response,
     AppException
 )
@@ -37,23 +36,23 @@ def read_kline(
     app_logger.debug(f"Successfully fetched {len(kline)} kline records")
     return create_success_response(data=kline)
 
-@router.get("/{symbol}/{id}")
+@router.get("/{symbol}/{kline_id}")
 def read_kline_by_id(
     *,
     db: Session = Depends(deps.get_db),
     symbol: str,
-    id: int,
+    kline_id: int,
 ):
     """根据ID获取K线数据"""
-    app_logger.debug(f"Fetching kline data for symbol: {symbol}, id: {id}")
+    app_logger.debug(f"Fetching kline data for symbol: {symbol}, kline_id: {kline_id}")
     if symbol not in SYMBOL_TO_MODEL:
         app_logger.error(f"Unsupported symbol: {symbol}")
         raise InvalidParameterException(f"不支持的交易品种: {symbol}")
-    kline = crud.kline.get(db=db, symbol=symbol, id=id)
+    kline = crud.kline.get(db=db, symbol=symbol, id=kline_id)
     if not kline:
-        app_logger.warning(f"Kline data not found for symbol: {symbol}, id: {id}")
+        app_logger.warning(f"Kline data not found for symbol: {symbol}, kline_id: {kline_id}")
         raise ResourceNotFoundException("K线数据不存在")
-    app_logger.debug(f"Successfully fetched kline data for id: {id}")
+    app_logger.debug(f"Successfully fetched kline data for kline_id: {kline_id}")
     return create_success_response(data=kline)
 
 @router.get("/{symbol}/timestamp/{timestamp}")
@@ -190,6 +189,5 @@ def read_aggregated_kline(
         logger.error(f"Error fetching aggregated K-line data: {str(e)}")
         raise AppException(
             code=500,
-            message="获取聚合K线数据失败",
-            data={"error": str(e)}
+            message="获取聚合K线数据失败"
         )

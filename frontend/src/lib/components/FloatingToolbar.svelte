@@ -130,7 +130,13 @@
     }
 
     function handleButtonClick(buttonId) {
-        dispatch('panelToggle', { panel: buttonId });
+        // 隐藏tooltip
+        hideTooltip();
+        
+        // 分发面板切换事件
+        dispatch('panelToggle', {
+            panelType: buttonId
+        });
     }
 
     function showTooltip(buttonId) {

@@ -38,6 +38,7 @@ def get_supported_timeframes():
 def get_klines(
         timeframe: str = Query("1h", description="时间周期"),
         limit: int = Query(200, ge=1, le=1000, description="数据条数"),
+        symbol: str = Query("btc_usd", description="交易品种"),
         start_time: Optional[str] = Query(None, description="开始时间 (ISO格式)"),
         end_time: Optional[str] = Query(None, description="结束时间 (ISO格式)"),
         db: Session = Depends(get_db)
@@ -86,13 +87,14 @@ def get_klines(
         klines = kline_aggregator.aggregate_klines(
             db=db,
             timeframe=timeframe,
+            symbol=symbol,
             start_time=start_dt,
             end_time=end_dt,
             limit=limit
         )
 
         # 获取数据统计
-        stats = kline_aggregator.get_data_statistics(db)
+        stats = kline_aggregator.get_data_statistics(db, symbol=symbol)
 
         app_logger.info(f"✅ 成功返回 {len(klines)} 条 {timeframe} K线数据")
 
@@ -125,6 +127,7 @@ def get_klines(
 def get_latest_klines(
         timeframe: str = Query("1h", description="时间周期"),
         count: int = Query(100, ge=1, le=500, description="最新数据条数"),
+        symbol: str = Query("btc_usd", description="交易品种"),
         db: Session = Depends(get_db)
 ):
     """获取最新的K线数据"""
@@ -134,10 +137,11 @@ def get_latest_klines(
         klines = kline_aggregator.aggregate_klines(
             db=db,
             timeframe=timeframe,
+            symbol=symbol,
             limit=count
         )
 
-        latest_timestamp = kline_aggregator.get_latest_timestamp(db)
+        latest_timestamp = kline_aggregator.get_latest_timestamp(db, symbol=symbol)
 
         return create_success_response(data={
             "klines": klines,
@@ -195,10 +199,13 @@ def fetch_new_data():
 
 
 @router.get("/stats")
-def get_data_statistics(db: Session = Depends(get_db)):
+def get_data_statistics(
+        symbol: str = Query("btc_usd", description="交易品种"),
+        db: Session = Depends(get_db)
+):
     """获取数据库统计信息"""
     try:
-        stats = kline_aggregator.get_data_statistics(db)
+        stats = kline_aggregator.get_data_statistics(db, symbol=symbol)
 
         return create_success_response(data={
             "statistics": stats,

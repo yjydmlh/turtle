@@ -16,16 +16,14 @@ export default defineConfig({
       // 允许访问工作区根目录
       allow: ['..', '..']
     },
-    // 开启缓存以提升重新加载速度
-    force: true,
     // 预热常用文件
     warmup: {
-      clientFiles: ['./src/lib/components/*.svelte', './src/routes/*.svelte']
+      clientFiles: ['./src/lib/components/FloatingToolbar.svelte', './src/lib/components/DraggablePanel.svelte', './src/routes/+page.svelte']
     },
     proxy: {
       // 代理API请求到后端
       '/api': {
-        target: 'http://localhost:8000',
+        target: 'http://localhost:8001',
         changeOrigin: true,
         secure: false,
         // 启用代理缓存
@@ -73,11 +71,9 @@ export default defineConfig({
   },
 
   optimizeDeps: {
-    include: ['klinecharts', '@klinecharts/pro', 'lucide-svelte', 'clsx', 'tailwind-merge'],
-    // 强制预构建依赖以提升性能
-    force: true,
-    // 预构建排除项
-    exclude: []
+    include: ['clsx', 'tailwind-merge'],
+    // 排除大型图表库，使用动态导入
+    exclude: ['klinecharts', '@klinecharts/pro', 'lucide-svelte']
   },
 
   // 性能优化
