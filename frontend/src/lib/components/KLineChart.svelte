@@ -308,7 +308,7 @@
             isLoading = true;
             error = null;
             
-            const response = await fetch('/api/v1/kline_simple/klines?timeframe=1m&symbol=btc_usdt&limit=200');
+            const response = await fetch('/api/v1/kline_simple/klines?timeframe=1m&symbol=btc_usdt&limit=1000');
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
@@ -823,36 +823,36 @@
     </div>
 
     <!-- 图表信息面板 -->
-    <div class="mt-2 flex flex-wrap items-center justify-between text-xs text-gray-600">
-        <div class="flex items-center space-x-4">
-            <span>数据源: 币安API</span>
-            <span>时间周期: {$settingsStore.timeframe}</span>
-            <span>数据量: {$klineStore.length} 条</span>
-        </div>
+<!--    <div class="mt-2 flex flex-wrap items-center justify-between text-xs text-gray-600">-->
+<!--        <div class="flex items-center space-x-4">-->
+<!--            <span>数据源: 币安API</span>-->
+<!--            <span>时间周期: {$settingsStore.timeframe}</span>-->
+<!--            <span>数据量: {$klineStore.length} 条</span>-->
+<!--        </div>-->
 
-        <div class="flex items-center space-x-2">
-            {#if $settingsStore.showFenxings}
-                <span class="flex items-center">
-                    <span class="w-2 h-2 bg-bull-500 rounded-full mr-1"></span>
-                    分型
-                </span>
-            {/if}
+<!--        <div class="flex items-center space-x-2">-->
+<!--            {#if $settingsStore.showFenxings}-->
+<!--                <span class="flex items-center">-->
+<!--                    <span class="w-2 h-2 bg-bull-500 rounded-full mr-1"></span>-->
+<!--                    分型-->
+<!--                </span>-->
+<!--            {/if}-->
 
-            {#if $settingsStore.showBis}
-                <span class="flex items-center">
-                    <span class="w-2 h-2 bg-purple-500 rounded-full mr-1"></span>
-                    笔
-                </span>
-            {/if}
+<!--            {#if $settingsStore.showBis}-->
+<!--                <span class="flex items-center">-->
+<!--                    <span class="w-2 h-2 bg-purple-500 rounded-full mr-1"></span>-->
+<!--                    笔-->
+<!--                </span>-->
+<!--            {/if}-->
 
-            {#if $settingsStore.showBuySellPoints}
-                <span class="flex items-center">
-                    <span class="w-2 h-2 bg-yellow-500 rounded-full mr-1"></span>
-                    买卖点
-                </span>
-            {/if}
-        </div>
-    </div>
+<!--            {#if $settingsStore.showBuySellPoints}-->
+<!--                <span class="flex items-center">-->
+<!--                    <span class="w-2 h-2 bg-yellow-500 rounded-full mr-1"></span>-->
+<!--                    买卖点-->
+<!--                </span>-->
+<!--            {/if}-->
+<!--        </div>-->
+<!--    </div>-->
 </div>
 
 <style>
