@@ -79,10 +79,8 @@ def generate_test_data(hours: int = 48, base_price: float = 60000.0) -> bool:
         # 检查数据库中是否已有数据
         existing_count = db.query(BtcUsdtKline).count()
         if existing_count > 0:
-            app_logger.info(f"📊 数据库中已有 {existing_count} 条数据，将清除重新生成")
-            # 清除现有数据
-            db.query(BtcUsdtKline).delete()
-            db.commit()
+            app_logger.info(f"📊 数据库中已有 {existing_count} 条数据，将跳过生成")
+            return True
         
         saved_count = 0
         current_price = base_price

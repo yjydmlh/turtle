@@ -133,28 +133,10 @@ def check_database_status():
 
 
 def reset_database():
-    """重置数据库（危险操作）"""
-    try:
-        response = input("⚠️ 警告: 这将删除所有数据！确认重置数据库? (输入 'RESET' 确认): ")
-        if response != "RESET":
-            print("❌ 取消重置操作")
-            return False
-
-        from app.db.session import engine
-        from app.db.base_class import Base
-
-        print("🗑️ 删除所有表...")
-        Base.metadata.drop_all(bind=engine)
-
-        print("🏗️ 重新创建表...")
-        Base.metadata.create_all(bind=engine)
-
-        print("✅ 数据库重置完成")
-        return True
-
-    except Exception as e:
-        print(f"❌ 数据库重置失败: {e}")
-        return False
+    """重置数据库（危险操作）- 此功能已禁用"""
+    print("⚠️ 数据库重置功能已被禁用，以防止意外删除数据")
+    print("💡 如需重置数据库，请手动操作数据库")
+    return False
 
 
 def main():
