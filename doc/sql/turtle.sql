@@ -4,3 +4,4 @@ FROM btc_usdt
 GROUP BY DATE(close_time)
 ORDER BY date desc
 ;
+
