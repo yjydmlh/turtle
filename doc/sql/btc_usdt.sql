@@ -56,6 +56,7 @@ SELECT create_hypertable('btc_usdt', 'open_time', chunk_time_interval => INTERVA
 CREATE MATERIALIZED VIEW btc_usdt_5m
 WITH (timescaledb.continuous) AS
 SELECT time_bucket('5 minutes', open_time) AS bucket,
+       EXTRACT(EPOCH FROM time_bucket('5 minutes', open_time))::bigint * 1000 AS id,
        FIRST(open_time, open_time) AS open_time,
        LAST(close_time, close_time) AS close_time,
        FIRST(open_price, open_time) AS open_price,
@@ -64,7 +65,7 @@ SELECT time_bucket('5 minutes', open_time) AS bucket,
        MIN(low_price) AS low_price,
        SUM(volume) AS volume
 FROM btc_usdt
-GROUP BY bucket;
+GROUP BY time_bucket('5 minutes', open_time);
 --为5分钟聚合视图添加刷新策略
 SELECT add_continuous_aggregate_policy('btc_usdt_5m',
   start_offset => INTERVAL '2 hours',
@@ -76,6 +77,7 @@ SELECT add_continuous_aggregate_policy('btc_usdt_5m',
 CREATE MATERIALIZED VIEW btc_usdt_15m
 WITH (timescaledb.continuous) AS
 SELECT time_bucket('15 minutes', open_time) AS bucket,
+       EXTRACT(EPOCH FROM time_bucket('15 minutes', open_time))::bigint * 1000 AS id,
        FIRST(open_time, open_time) AS open_time,
        LAST(close_time, close_time) AS close_time,
        FIRST(open_price, open_time) AS open_price,
@@ -84,7 +86,7 @@ SELECT time_bucket('15 minutes', open_time) AS bucket,
        MIN(low_price) AS low_price,
        SUM(volume) AS volume
 FROM btc_usdt
-GROUP BY bucket;
+GROUP BY time_bucket('15 minutes', open_time);
 -- 为15分钟聚合视图添加刷新策略
 SELECT add_continuous_aggregate_policy('btc_usdt_15m',
   start_offset => INTERVAL '3 hours',
@@ -96,6 +98,7 @@ SELECT add_continuous_aggregate_policy('btc_usdt_15m',
 CREATE MATERIALIZED VIEW btc_usdt_30m
 WITH (timescaledb.continuous) AS
 SELECT time_bucket('30 minutes', open_time) AS bucket,
+       EXTRACT(EPOCH FROM time_bucket('30 minutes', open_time))::bigint * 1000 AS id,
        FIRST(open_time, open_time) AS open_time,
        LAST(close_time, close_time) AS close_time,
        FIRST(open_price, open_time) AS open_price,
@@ -104,7 +107,7 @@ SELECT time_bucket('30 minutes', open_time) AS bucket,
        MIN(low_price) AS low_price,
        SUM(volume) AS volume
 FROM btc_usdt
-GROUP BY bucket;
+GROUP BY time_bucket('30 minutes', open_time);
 -- 为30分钟聚合视图添加刷新策略
 SELECT add_continuous_aggregate_policy('btc_usdt_30m',
   start_offset => INTERVAL '6 hours',
@@ -116,6 +119,7 @@ SELECT add_continuous_aggregate_policy('btc_usdt_30m',
 CREATE MATERIALIZED VIEW btc_usdt_1h
 WITH (timescaledb.continuous) AS
 SELECT time_bucket('1 hour', open_time) AS bucket,
+       EXTRACT(EPOCH FROM time_bucket('1 hour', open_time))::bigint * 1000 AS id,
        FIRST(open_time, open_time) AS open_time,
        LAST(close_time, close_time) AS close_time,
        FIRST(open_price, open_time) AS open_price,
@@ -124,7 +128,7 @@ SELECT time_bucket('1 hour', open_time) AS bucket,
        MIN(low_price) AS low_price,
        SUM(volume) AS volume
 FROM btc_usdt
-GROUP BY bucket;
+GROUP BY time_bucket('1 hour', open_time);
 -- 为1小时聚合视图添加刷新策略
 SELECT add_continuous_aggregate_policy('btc_usdt_1h',
   start_offset => INTERVAL '24 hours',
@@ -136,6 +140,7 @@ SELECT add_continuous_aggregate_policy('btc_usdt_1h',
 CREATE MATERIALIZED VIEW btc_usdt_4h
 WITH (timescaledb.continuous) AS
 SELECT time_bucket('4 hour', open_time) AS bucket,
+       EXTRACT(EPOCH FROM time_bucket('4 hour', open_time))::bigint * 1000 AS id,
        FIRST(open_time, open_time) AS open_time,
        LAST(close_time, close_time) AS close_time,
        FIRST(open_price, open_time) AS open_price,
@@ -144,7 +149,7 @@ SELECT time_bucket('4 hour', open_time) AS bucket,
        MIN(low_price) AS low_price,
        SUM(volume) AS volume
 FROM btc_usdt
-GROUP BY bucket;
+GROUP BY time_bucket('4 hour', open_time);
 -- 为4小时聚合视图添加刷新策略
 SELECT add_continuous_aggregate_policy('btc_usdt_4h',
   start_offset => INTERVAL '24 hours',
@@ -156,6 +161,7 @@ SELECT add_continuous_aggregate_policy('btc_usdt_4h',
 CREATE MATERIALIZED VIEW btc_usdt_1d
 WITH (timescaledb.continuous) AS
 SELECT time_bucket('1 day', open_time) AS bucket,
+       EXTRACT(EPOCH FROM time_bucket('1 day', open_time))::bigint * 1000 AS id,
        FIRST(open_time, open_time) AS open_time,
        LAST(close_time, close_time) AS close_time,
        FIRST(open_price, open_time) AS open_price,
@@ -164,7 +170,7 @@ SELECT time_bucket('1 day', open_time) AS bucket,
        MIN(low_price) AS low_price,
        SUM(volume) AS volume
 FROM btc_usdt
-GROUP BY bucket;
+GROUP BY time_bucket('1 day', open_time);
 
 -- 为1天聚合视图添加刷新策略
 SELECT add_continuous_aggregate_policy('btc_usdt_1d',
@@ -177,6 +183,7 @@ SELECT add_continuous_aggregate_policy('btc_usdt_1d',
 CREATE MATERIALIZED VIEW btc_usdt_1w
 WITH (timescaledb.continuous) AS
 SELECT time_bucket('1 week', open_time) AS bucket,
+       EXTRACT(EPOCH FROM time_bucket('1 week', open_time))::bigint * 1000 AS id,
        FIRST(open_time, open_time) AS open_time,
        LAST(close_time, close_time) AS close_time,
        FIRST(open_price, open_time) AS open_price,
@@ -185,7 +192,7 @@ SELECT time_bucket('1 week', open_time) AS bucket,
        MIN(low_price) AS low_price,
        SUM(volume) AS volume
 FROM btc_usdt
-GROUP BY bucket;
+GROUP BY time_bucket('1 week', open_time);
 
 -- 为1周聚合视图添加刷新策略
 SELECT add_continuous_aggregate_policy('btc_usdt_1w',
@@ -197,6 +204,7 @@ SELECT add_continuous_aggregate_policy('btc_usdt_1w',
 CREATE MATERIALIZED VIEW btc_usdt_1mo
 WITH (timescaledb.continuous) AS
 SELECT time_bucket('1 month', open_time) AS bucket,
+       EXTRACT(EPOCH FROM time_bucket('1 month', open_time))::bigint * 1000 AS id,
        FIRST(open_time, open_time) AS open_time,
        LAST(close_time, close_time) AS close_time,
        FIRST(open_price, open_time) AS open_price,
@@ -205,7 +213,7 @@ SELECT time_bucket('1 month', open_time) AS bucket,
        MIN(low_price) AS low_price,
        SUM(volume) AS volume
 FROM btc_usdt
-GROUP BY bucket;
+GROUP BY time_bucket('1 month', open_time);
 
 -- 为1个月聚合视图添加刷新策略
 SELECT add_continuous_aggregate_policy('btc_usdt_1mo',
