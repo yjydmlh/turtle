@@ -1,0 +1,28 @@
+# trading 配置文件
+
+# 应用配置
+app:
+  name: "turtle-front"
+  version: "0.1.0"
+
+# 服务器配置
+server:
+  port: 8000
+  reload: true
+  workers: 1
+  keep_alive_timeout: 5
+  graceful_timeout: 30
+  response_format:
+    enabled: true
+    exclude_paths:
+      - "/docs"
+
+# 日志配置
+logging:
+  level: "DEBUG"
+
+# 任务调度配置
+scheduler:
+  enabled: true
+  timezone: "UTC"
+  max_workers: 10

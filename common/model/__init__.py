@@ -10,6 +10,10 @@ from common.model.sol_usdt_kline import SolUsdtKline
 # 视图相关
 from common.model.kline_view_base import KlineView
 
+# 枚举
+from common.model.symbol_enum import SymbolEnum
+from common.model.timeframe_enum import TimeframeEnum
+
 __all__ = [
     # 基类
     "Base",
@@ -20,4 +24,7 @@ __all__ = [
     "SolUsdtKline",
     # 视图类
     "KlineView",
+    # 枚举
+    "SymbolEnum",
+    "TimeframeEnum",
 ]

@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
 
 from app.api.deps import get_db
-from app.crud.kline import kline
+from app.crud.kline_dao import kline
 from app.core.exceptions import create_success_response, create_error_response
 from app.core.logger import app_logger
 

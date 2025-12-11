@@ -3,12 +3,13 @@ from typing import List, Optional, Type
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
-from app.models.kline import BtcUsdtKline, SYMBOL_TO_MODEL
-from app.schemas.kline import BtcUsdtKlineCreate, BtcUsdtKline
 from app.core.logger import app_logger
 from sqlalchemy import text
 
-class CRUDKline:
+from common.model import SymbolEnum, TimeframeEnum
+
+
+class KlineDao:
     def get_model(self, symbol: str) -> Type[BtcUsdtKline]:
         """获取对应交易品种的模型类"""
         try:

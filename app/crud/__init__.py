@@ -1,3 +1,3 @@
-from app.crud.kline import CRUDKline
+from app.crud.kline_dao import KlineDao
 
-kline = CRUDKline() 
+kline = KlineDao()
